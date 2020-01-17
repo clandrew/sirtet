@@ -520,7 +520,7 @@ namespace Tetris
 
             framesPerPieceDrop = 50;
 
-            loserMode = true;
+            loserMode = false;
 
             NewGame();
         }
