@@ -19,5 +19,9 @@ Numerical key 2 - Toggle the camera type between 'typical Tetris' and 'this Tetr
 
 Upon Game Over, press any key to start again.
 
+## Demo
+
+![Example image](https://raw.githubusercontent.com/clandrew/sirtet/master/Demo.gif "Example image")
+
 ## Build
 This program is organized as a UWP application, built for x86-64 based architectures running a Windows 10 operating system. 2D graphics functionalities use Win2D.
