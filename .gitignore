@@ -3,6 +3,6 @@ Tetris/bin/*
 Tetris/obj/*
 Old/Tetris/bin/*
 Old/Tetris/obj/*
-sirtet/obj/*
-sirtet/.vs/*
-sirtet/bin/*
+src/obj/*
+src/.vs/*
+src/bin/*
