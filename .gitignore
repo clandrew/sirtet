@@ -6,3 +6,4 @@ Old/Tetris/obj/*
 src/obj/*
 src/.vs/*
 src/bin/*
+src/AppPackages/*

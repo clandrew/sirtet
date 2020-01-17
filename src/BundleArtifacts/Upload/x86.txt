@@ -1,0 +1,2 @@
+MainPackage=C:\Users\Claire\source\repos\sirtet\src\bin\x86\Release\Upload\sirtet_1.0.2.0_x86.appx
+SymbolPackage=C:\Users\Claire\source\repos\sirtet\src\bin\x86\Release\Upload\sirtet_1.0.2.0\sirtet_1.0.2.0_x86.appxsym

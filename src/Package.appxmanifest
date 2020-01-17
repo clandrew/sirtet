@@ -7,15 +7,15 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="c468d11c-56e2-45b6-b594-67325a6eefda"
-    Publisher="CN=Claire"
-    Version="1.0.0.0" />
+    Name="65019GladysKnight.SirTetthegame"
+    Publisher="CN=15BC1442-DA56-4F9C-B509-F5C7EBBC880D"
+    Version="1.0.2.0" />
 
-  <mp:PhoneIdentity PhoneProductId="c468d11c-56e2-45b6-b594-67325a6eefda" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="b9ee7908-1059-4557-ac13-39e7d2fb537e" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>sirtet</DisplayName>
-    <PublisherDisplayName>Claire</PublisherDisplayName>
+    <DisplayName>Sir Tet: the game</DisplayName>
+    <PublisherDisplayName>GladysKnight</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -32,7 +32,7 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="sirtet.App">
       <uap:VisualElements
-        DisplayName="sirtet"
+        DisplayName="Sir Tet: the game"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
         Description="sirtet"
