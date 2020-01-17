@@ -4,6 +4,8 @@
 
 Computers can be used for many things. Reading books, watching sports games, communicating with others. In your life, you may even come to play some games on your computer. Some of those games may have been good. Some may have been fun. This is not one of those.
 
+This game plays like conventional Tetris, with one change- the 'camera', or viewing perspective. The 'camera' stays locked on to the piece in play; it's the grid that moves. The grid shifts around and rotates accordingly. To maintain the purity of this game concept, the controls are not affected by the changes in view.
+
 ## Controls
 Up arrow key - Rotate the current piece
 
