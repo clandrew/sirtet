@@ -18,3 +18,6 @@ Numerical key 1 - Toggle debug visuals (debug build only)
 Numerical key 2 - Toggle the camera type between 'typical Tetris' and 'this Tetris' (debug build only)
 
 Upon Game Over, press any key to start again.
+
+## Build
+This program is organized as a UWP application, built for x86-64 based architectures running a Windows 10 operating system. 2D graphics functionalities use Win2D.
