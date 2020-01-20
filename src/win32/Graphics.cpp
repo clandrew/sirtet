@@ -33,6 +33,7 @@ void Graphics::Initialize(HWND hwnd)
 	VerifyHR(m_renderTarget->CreateCompatibleRenderTarget(D2D1::SizeF(128, 112), &m_native));
 
 	m_bg = LoadImageFile(L"Images\\testbg.png");
+	m_ui = LoadImageFile(L"Images\\ui.png");
 	m_blocks = LoadImageFile(L"Images\\blocks.png");
 }
 
@@ -159,7 +160,16 @@ void Graphics::Draw()
 			m_native->DrawBitmap(m_bg.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 
-		// Draw a block
+		// Draw the UI
+		{
+			// m_ui
+			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 98, 107);
+			D2D1_RECT_F dstRect = D2D1::RectF(30, 3, 30+98, 3+107);
+			m_native->DrawBitmap(m_ui.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
+		}
+
+		// Draw some blocks
+		/*
 		D2D1_MATRIX_3X2_F gridOrigin = D2D1::Matrix3x2F::Translation(35, 8);
 		m_native->SetTransform(gridOrigin * rotate);
 		{
@@ -178,7 +188,7 @@ void Graphics::Draw()
 			dstRect.top = y * 6;
 			dstRect.bottom = dstRect.top + 6;
 			m_native->DrawBitmap(m_blocks.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
-		}
+		}*/
 
 		VerifyHR(m_native->EndDraw());
 	}

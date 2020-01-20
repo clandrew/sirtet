@@ -9,3 +9,4 @@ src/uwp/bin/*
 src/uwp/AppPackages/*
 src/win32/Debug/*
 src/win32/.vs/*
+src/win32/x64/*

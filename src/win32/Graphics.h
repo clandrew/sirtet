@@ -9,6 +9,7 @@ class Graphics
 	ComPtr<ID2D1BitmapRenderTarget> m_native;
 
 	ComPtr<ID2D1Bitmap1> m_bg;
+	ComPtr<ID2D1Bitmap1> m_ui;
 	ComPtr<ID2D1Bitmap1> m_blocks;
 
 	enum class PieceType { I, L, O, R, S, T, Z };
