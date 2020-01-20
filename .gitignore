@@ -3,7 +3,9 @@ Tetris/bin/*
 Tetris/obj/*
 Old/Tetris/bin/*
 Old/Tetris/obj/*
-src/obj/*
-src/.vs/*
-src/bin/*
-src/AppPackages/*
+src/uwp/obj/*
+src/uwp/.vs/*
+src/uwp/bin/*
+src/uwp/AppPackages/*
+src/win32/Debug/*
+src/win32/.vs/*
