@@ -32,7 +32,7 @@ void Graphics::Initialize(HWND hwnd)
 
 	VerifyHR(m_renderTarget->CreateCompatibleRenderTarget(D2D1::SizeF(128, 112), &m_native));
 
-	m_bg = LoadImageFile(L"Images\\bg.png");
+	m_bg = LoadImageFile(L"Images\\testbg.png");
 	m_blocks = LoadImageFile(L"Images\\blocks.png");
 }
 
@@ -187,21 +187,42 @@ void Graphics::Draw()
 		m_renderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		m_renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black));
 
-		D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 128, 112);
+		float srcWidth = 128;
+		float srcHeight = 112;
+		D2D1_RECT_F srcRect = D2D1::RectF(0, 0, srcWidth, srcHeight);
+		float goalRatio = srcWidth / srcHeight;
 
 		D2D1_SIZE_F rtSize = m_renderTarget->GetSize();
+		float targetWidth = rtSize.width;
+		float targetHeight = rtSize.height;
+		float targetRatio = targetWidth / targetHeight;
 
-		// Letterbox m_native to the final target
-		float srcHeight = static_cast<float>(srcRect.bottom - srcRect.top);
-		float heightScale = static_cast<float>(rtSize.height) / srcHeight;
-		float proportionateDstWidth = static_cast<float>(srcRect.right - srcRect.left) * heightScale;
-		float centerX = (rtSize.width - proportionateDstWidth) / 2;
+		D2D1_RECT_F dstRect;
+		if (targetRatio > goalRatio)
+		{
+			// Letterbox
+			float heightScale = targetHeight / srcHeight;
+			float proportionateDstWidth = srcWidth * heightScale;
+			float centerX = (targetWidth - proportionateDstWidth) / 2;
 
-		D2D1_RECT_F dstRect = D2D1::RectF(centerX, 0, proportionateDstWidth + centerX, rtSize.height);
+			dstRect = D2D1::RectF(centerX, 0, proportionateDstWidth + centerX, rtSize.height);
+
+		}
+		else
+		{
+			// Pillarbox
+			float widthScale = targetWidth / srcWidth;
+			float proportionalDstHeight = srcHeight * widthScale;
+			float centerY = (targetHeight - proportionalDstHeight) / 2;
+
+			dstRect = D2D1::RectF(0, centerY, targetWidth, proportionalDstHeight + centerY);
+		}
 
 		ComPtr<ID2D1Bitmap> bitmapRenderTarget;
 		VerifyHR(m_native->GetBitmap(&bitmapRenderTarget));
 		m_renderTarget->DrawBitmap(bitmapRenderTarget.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
+
+
 
 		VerifyHR(m_renderTarget->EndDraw());
 	}
