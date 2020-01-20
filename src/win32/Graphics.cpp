@@ -15,6 +15,10 @@ void VerifyBool(BOOL b)
 
 void Graphics::Initialize(HWND hwnd)
 {
+	m_blockSize = 6;
+	m_blocksXCount = 10;
+	m_blocksYCount = 16;
+
 	D2D1_FACTORY_OPTIONS factoryOptions = {};
 	factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 	VerifyHR(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &factoryOptions, &m_d2dFactory));
@@ -143,6 +147,20 @@ void Graphics::Resize(HWND hwnd)
 	VerifyHR(m_renderTarget->Resize(newSize));
 }
 
+void Graphics::DrawBlock(int x, int y)
+{
+	assert(x >= 0 && x < m_blocksXCount);
+	assert(y >= 0 && y < m_blocksYCount);
+
+	D2D1_RECT_F srcRect = D2D1::RectF(0, 0, m_blockSize, m_blockSize);
+	D2D1_RECT_F dstRect{};
+	dstRect.left = x * m_blockSize;
+	dstRect.right = dstRect.left + m_blockSize;
+	dstRect.top = y * m_blockSize;
+	dstRect.bottom = dstRect.top + m_blockSize;
+	m_native->DrawBitmap(m_blocks.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
+}
+
 void Graphics::Draw()
 {
 	{
@@ -168,27 +186,17 @@ void Graphics::Draw()
 			m_native->DrawBitmap(m_ui.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 
-		// Draw some blocks
-		/*
 		D2D1_MATRIX_3X2_F gridOrigin = D2D1::Matrix3x2F::Translation(35, 8);
-		m_native->SetTransform(gridOrigin * rotate);
-		{
-			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 6, 6);
-			D2D1_RECT_F dstRect = D2D1::RectF(0, 0, 6, 6);
-			m_native->DrawBitmap(m_blocks.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
-		}
+		m_native->SetTransform(gridOrigin* rotate);
 
+		// Draw a full set of blocks
+		for (int y = 0; y < m_blocksYCount; ++y)
 		{
-			int x = 2;
-			int y = 9;
-			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 6, 6);
-			D2D1_RECT_F dstRect{};
-			dstRect.left = x * 6;
-			dstRect.right = dstRect.left + 6;
-			dstRect.top = y * 6;
-			dstRect.bottom = dstRect.top + 6;
-			m_native->DrawBitmap(m_blocks.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
-		}*/
+			for (int x = 0; x < m_blocksXCount; ++x)
+			{
+				DrawBlock(x, y);
+			}
+		}
 
 		VerifyHR(m_native->EndDraw());
 	}

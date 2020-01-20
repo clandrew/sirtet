@@ -14,5 +14,7 @@
 #include <wrl/client.h>
 #include <string>
 #include <vector>
+#include <assert.h>
+#include <time.h>
 
 using namespace Microsoft::WRL;

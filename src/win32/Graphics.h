@@ -22,4 +22,9 @@ public:
 private:
 	void EnsureWicImagingFactory();
 	ComPtr<ID2D1Bitmap1> LoadImageFile(std::wstring fileName);
+	void DrawBlock(int x, int y);
+
+	int m_blockSize;
+	int m_blocksXCount;
+	int m_blocksYCount;
 };
