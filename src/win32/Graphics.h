@@ -24,13 +24,13 @@ struct PieceLayout
 
 enum Color
 {
-	Red,
-	Blue,
-	Green,
-	Cyan,
-	Magenta,
+	Purple,
+	Orange,
 	Yellow,
-	Purple
+	Cyan,
+	Green,
+	Red,
+	Pink
 };
 
 class Random
@@ -197,7 +197,7 @@ public:
 private:
 	void EnsureWicImagingFactory();
 	ComPtr<ID2D1Bitmap1> LoadImageFile(std::wstring fileName);
-	void DrawBlock(int x, int y);
+	void DrawBlock(int x, int y, Color c);
 	void NewGame();
 	void SetCameraTargetXY();
 	void SetCameraTargetRotation();

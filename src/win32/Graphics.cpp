@@ -91,13 +91,13 @@ void Grid::Initialize(int blockSize, int blocksXCount, int blocksYCount)
 	pieceLayouts[6].AddRotation(3, -1, 2, 0, 3, 0, 2, 1);
 
 	pieceColors.resize(7);
-	pieceColors[0] = Color::Red;
-	pieceColors[1] = Color::Blue;
-	pieceColors[2] = Color::Green;
+	pieceColors[0] = Color::Purple;
+	pieceColors[1] = Color::Red;
+	pieceColors[2] = Color::Yellow;
 	pieceColors[3] = Color::Cyan;
-	pieceColors[4] = Color::Magenta;
-	pieceColors[5] = Color::Yellow;
-	pieceColors[6] = Color::Purple;
+	pieceColors[4] = Color::Green;
+	pieceColors[5] = Color::Red;
+	pieceColors[6] = Color::Pink;
 
 	Reset();
 }
@@ -619,13 +619,17 @@ void Graphics::OnTimerTick()
 	}
 }
 
-void Graphics::DrawBlock(int x, int y)
+void Graphics::DrawBlock(int x, int y, Color c)
 {
 	// The current piece might have an edge which goes outside the grid. We just ignore those.
 	if (x < 0 ||y < 0 || x >= m_blocksXCount || y >= m_blocksYCount) 
 		return;
 
-	D2D1_RECT_F srcRect = D2D1::RectF(0, 0, m_blockSize, m_blockSize);
+	D2D1_RECT_F srcRect{};
+	srcRect.bottom = m_blockSize;
+	srcRect.left = (int)c * m_blockSize;
+	srcRect.right = srcRect.left + m_blockSize;
+
 	D2D1_RECT_F dstRect{};
 	dstRect.left = x * m_blockSize;
 	dstRect.right = dstRect.left + m_blockSize;
@@ -675,7 +679,7 @@ void Graphics::Draw()
 				}
 				else
 				{
-					DrawBlock(cellX, cellY);
+					DrawBlock(cellX, cellY, (Color)cell);
 				}
 			}
 		}
@@ -685,7 +689,7 @@ void Graphics::Draw()
 		// Draw the current piece
 		for (int i = 0; i < 4; ++i)
 		{
-			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y);
+			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y, (Color)grid.GetCurrentPieceType());
 		}
 
 		VerifyHR(m_native->EndDraw());
