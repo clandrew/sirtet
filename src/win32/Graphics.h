@@ -65,7 +65,7 @@ class Grid
 	std::vector<int> rowsBeingCleared;
 
 	Random random;
-
+	
 public:
 	Grid();
 
@@ -183,7 +183,7 @@ class Graphics
 	bool finishedLoadingResources;
 	float backgroundScrollX;
 	float backgroundScrollY;
-
+	
 public:
 	void Initialize(HWND hwnd);
 	void Draw();
@@ -193,6 +193,17 @@ private:
 	void EnsureWicImagingFactory();
 	ComPtr<ID2D1Bitmap1> LoadImageFile(std::wstring fileName);
 	void DrawBlock(int x, int y);
+	void NewGame();
+	void OnKeyDown(WPARAM key);
+	void OnKeyUp(WPARAM key);
+	void SetCameraTargetXY();
+	void SetCameraTargetRotation();
+	void UpdateCamera();
+	void UpdateTimedDrop();
+	void UpdateForcedDrop();
+	void UpdateBackgroundScrolling();
+	void UpdateWeirdBackgroundScrolling();
+	void canvas_Update();
 
 	int m_blockSize;
 	int m_blocksXCount;

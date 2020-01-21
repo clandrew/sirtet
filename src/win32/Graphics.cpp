@@ -482,6 +482,12 @@ void Graphics::Initialize(HWND hwnd)
 	m_bg = LoadImageFile(L"Images\\testbg.png");
 	m_ui = LoadImageFile(L"Images\\ui.png");
 	m_blocks = LoadImageFile(L"Images\\blocks.png");
+
+	framesPerPieceDrop = 50;
+
+	loserMode = false;
+
+	NewGame();
 }
 
 void Graphics::EnsureWicImagingFactory()
@@ -690,44 +696,310 @@ void Graphics::Draw()
 }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////xxx
+void Graphics::NewGame()
+{
+	framesUntilPieceDrop = framesPerPieceDrop;
 
+	SetCameraTargetXY();
+	cameraX = cameraTargetX;
+	cameraY = cameraTargetY;
+	cameraRotation = cameraTargetRotation;
+
+	backgroundScrollX = 0;
+	backgroundScrollY = 0;
+}
+
+void Graphics::OnKeyDown(WPARAM key)
+{
+	if (gameOver)
+	{
+		return;
+	}
+
+	if (rowClearingAnimation.IsAnimating())
+	{
+		return;
+	}
+
+	if (key == 40)
+	{
+		bool forcedDrop = true;
+		auto dropResult = grid.DropPiece(forcedDrop);
+
+		if (dropResult == DropPieceResult::None || dropResult == DropPieceResult::PieceLanded)
+		{
+			forcingDrop = true;
+			SetCameraTargetXY();
+			SetCameraTargetRotation();
+		}
+		else if (dropResult == DropPieceResult::GameOver)
+		{
+			gameOver = true;
+		}
+		else
+		{
+			assert(dropResult == DropPieceResult::RowsCleared);
+			rowClearingAnimation.Start();
+		}
+	}
+}
+
+void Graphics::OnKeyUp(WPARAM key)
+{
+	if (gameOver)
+	{
+		grid.Reset();
+		NewGame();
+		gameOver = false;
+		return;
+	}
+
+	if (rowClearingAnimation.IsAnimating())
+	{
+		return;
+	}
+
+	if (key == 38)
+	{
+		if (grid.TryRotatePiece())
+		{
+			SetCameraTargetRotation();
+		}
+	}
+	else if (key == 37)
+	{
+		if (grid.MovePieceLeft())
+		{
+			SetCameraTargetXY();
+		}
+	}
+	else if (key == 39)
+	{
+		if (grid.MovePieceRight())
+		{
+			SetCameraTargetXY();
+		}
+	}
+	else if (key == 40)
+	{
+		forcingDrop = false;
+	}
+#if DEBUG
+	else if (args.VirtualKey == Windows.System.VirtualKey.Number1)
+	{
+		showDebuggingAids = !showDebuggingAids;
+	}
+	else if (args.VirtualKey == Windows.System.VirtualKey.Number2)
+	{
+		loserMode = !loserMode;
+	}
+#endif
+}
+
+void Graphics::SetCameraTargetXY()
+{
+	assert(!rowClearingAnimation.IsAnimating());
+
+	auto location = grid.GetCurrentPieceLocation();
+	int screenX = location.X * cellSize;
+	int screenY = location.Y * cellSize;
+
+	// Ensure camera is centered on the piece itself
+	cameraTargetX = screenX + (cellSize * 2);
+	cameraTargetY = screenY + (cellSize * 1);
+}
+
+void Graphics::SetCameraTargetRotation()
+{
+	cameraTargetRotation = RotationIndexToRadians(grid.GetCurrentPieceRotation());
+}
+
+void Graphics::canvas_Update()
+{
+	if (gameOver)
+	{
+		UpdateWeirdBackgroundScrolling();
+		return; // No animating
+	}
+
+	UpdateBackgroundScrolling();
+
+	if (rowClearingAnimation.IsAnimating())
+	{
+		rowClearingAnimation.Update();
+
+		if (!rowClearingAnimation.IsAnimating())
+		{
+			grid.PurgeClearedRows();
+		}
+	}
+	else
+	{
+		UpdateTimedDrop();
+
+		UpdateForcedDrop();
+
+		if (!rowClearingAnimation.IsAnimating())
+		{
+			UpdateCamera();
+		}
+	}
+}
+
+void Graphics::UpdateWeirdBackgroundScrolling()
+{
+	float backgroundScrollInc = 0.5f;
+
+	if (random.Next(2) == 0)
+		backgroundScrollInc = -backgroundScrollInc;
+
+	backgroundScrollX += backgroundScrollInc;
+
+	if (random.Next(2) == 0)
+		backgroundScrollInc = -backgroundScrollInc;
+
+	backgroundScrollY += backgroundScrollInc;
+}
+
+void Graphics::UpdateBackgroundScrolling()
+{
+	float backgroundScrollInc = 0.5f;
+	backgroundScrollX += backgroundScrollInc;
+	if (backgroundScrollX > 400)
+		backgroundScrollX = 0;
+
+	backgroundScrollY += backgroundScrollInc;
+	if (backgroundScrollY > 431)
+		backgroundScrollY = 0;
+}
+
+void Graphics::UpdateForcedDrop()
+{
+	if (!forcingDrop)
+		return;
+
+	if (rowClearingAnimation.IsAnimating())
+	{
+		forcingDrop = false;
+		return;
+	}
+
+	auto dropResult = grid.DropPiece(true);
+
+	if (dropResult == DropPieceResult::None)
+	{
+		SetCameraTargetXY();
+		SetCameraTargetRotation();
+	}
+	else if (dropResult == DropPieceResult::PieceLanded)
+	{
+		SetCameraTargetXY();
+		SetCameraTargetRotation();
+		forcingDrop = false;
+	}
+	else if (dropResult == DropPieceResult::GameOver)
+	{
+		gameOver = true;
+	}
+	else if (dropResult == DropPieceResult::RowsCleared)
+	{
+		rowClearingAnimation.Start();
+		forcingDrop = false;
+	}
+
+}
+
+void Graphics::UpdateTimedDrop()
+{
+	if (framesUntilPieceDrop <= 0)
+	{
+		auto dropResult = grid.DropPiece(false);
+
+		if (dropResult == DropPieceResult::None || dropResult == DropPieceResult::PieceLanded)
+		{
+			framesUntilPieceDrop = framesPerPieceDrop;
+
+			SetCameraTargetXY();
+			SetCameraTargetRotation();
+		}
+		else if (dropResult == DropPieceResult::GameOver)
+		{
+			gameOver = true;
+		}
+		else if (dropResult == DropPieceResult::RowsCleared)
+		{
+			framesUntilPieceDrop = framesPerPieceDrop;
+
+			rowClearingAnimation.Start();
+		}
+	}
+	else
+	{
+		framesUntilPieceDrop--;
+	}
+}
+
+void Graphics::UpdateCamera()
+{
+	assert(!rowClearingAnimation.IsAnimating());
+
+	float cameraIncXAmt = 4;
+	float cameraIncYAmt = cameraIncXAmt;
+
+	float cameraDispX = cameraTargetX - cameraX;
+	float cameraDispY = cameraTargetY - cameraY;
+
+	if (abs(cameraDispX) > cellSize)
+		cameraIncXAmt = cellSize * 3;
+
+	if (abs(cameraDispY) > cellSize)
+		cameraIncYAmt = cellSize * 3;
+
+	if (cameraX < cameraTargetX)
+	{
+		cameraX += cameraIncXAmt;
+		cameraX = min(cameraX, cameraTargetX);
+	}
+	if (cameraX > cameraTargetX)
+	{
+		cameraX -= cameraIncXAmt;
+		cameraX = max(cameraX, cameraTargetX);
+	}
+	if (cameraY < cameraTargetY)
+	{
+		cameraY += cameraIncYAmt;
+		cameraY = min(cameraY, cameraTargetY);
+	}
+	if (cameraY > cameraTargetY)
+	{
+		cameraY -= cameraIncYAmt;
+		cameraY = max(cameraY, cameraTargetY);
+	}
+
+	float cameraIncRotationAmt = 0.5f;
+	if (cameraRotation < cameraTargetRotation)
+	{
+		cameraRotation += cameraIncRotationAmt;
+		cameraRotation = min(cameraRotation, cameraTargetRotation);
+	}
+	if (cameraRotation > cameraTargetRotation)
+	{
+		cameraRotation += cameraIncRotationAmt;
+		cameraRotation = min(cameraRotation, 2 * MATH_PI);
+	}
+	if (cameraRotation >= 2 * MATH_PI)
+	{
+		cameraRotation = 0;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////xxx
 
 class MainPage
 {
-	// Gameplay
-	Grid grid;
-	int framesPerPieceDrop;
-	int framesUntilPieceDrop;
-	bool forcingDrop;
-	bool gameOver;
-	bool loserMode;
-	RowClearingAnimation rowClearingAnimation;
-	Random random;
-
-	// Camera settings
-	float cameraX;
-	float cameraY;
-	float cameraTargetX;
-	float cameraTargetY;
-	float cameraRotation;
-	float cameraTargetRotation;
-	bool showDebuggingAids;
-
-	// Graphics resources
-	bool prebakedDrawingValid;
-	bool finishedLoadingResources;
-	float backgroundScrollX;
-	float backgroundScrollY;
-
 
 	MainPage()
 	{
-		framesPerPieceDrop = 50;
-
-		loserMode = false;
-
-		NewGame();
 	}
 
 
@@ -752,123 +1024,6 @@ class MainPage
 		finishedLoadingResources = true;*/
 	}
 
-	void NewGame()
-	{
-		framesUntilPieceDrop = framesPerPieceDrop;
-
-		SetCameraTargetXY();
-		cameraX = cameraTargetX;
-		cameraY = cameraTargetY;
-		cameraRotation = cameraTargetRotation;
-
-		backgroundScrollX = 0;
-		backgroundScrollY = 0;
-	}
-
-	void OnKeyDown(WPARAM key)
-	{
-		if (gameOver)
-		{
-			return;
-		}
-
-		if (rowClearingAnimation.IsAnimating())
-		{
-			return;
-		}
-
-		if (key == 40)
-		{
-			bool forcedDrop = true;
-			auto dropResult = grid.DropPiece(forcedDrop);
-
-			if (dropResult == DropPieceResult::None || dropResult == DropPieceResult::PieceLanded)
-			{
-				forcingDrop = true;
-				SetCameraTargetXY();
-				SetCameraTargetRotation();
-			}
-			else if (dropResult == DropPieceResult::GameOver)
-			{
-				gameOver = true;
-			}
-			else
-			{
-				assert(dropResult == DropPieceResult::RowsCleared);
-				rowClearingAnimation.Start();
-			}
-		}
-	}
-
-	void OnKeyUp(WPARAM key)
-	{
-		if (gameOver)
-		{
-			grid.Reset();
-			NewGame();
-			gameOver = false;
-			return;
-		}
-
-		if (rowClearingAnimation.IsAnimating())
-		{
-			return;
-		}
-
-		if (key == 38)
-		{
-			if (grid.TryRotatePiece())
-			{
-				SetCameraTargetRotation();
-			}
-		}
-		else if (key == 37)
-		{
-			if (grid.MovePieceLeft())
-			{
-				SetCameraTargetXY();
-			}
-		}
-		else if (key == 39)
-		{
-			if (grid.MovePieceRight())
-			{
-				SetCameraTargetXY();
-			}
-		}
-		else if (key == 40)
-		{
-			forcingDrop = false;
-		}
-#if DEBUG
-		else if (args.VirtualKey == Windows.System.VirtualKey.Number1)
-		{
-			showDebuggingAids = !showDebuggingAids;
-		}
-		else if (args.VirtualKey == Windows.System.VirtualKey.Number2)
-		{
-			loserMode = !loserMode;
-		}
-#endif
-	}
-
-	void SetCameraTargetXY()
-	{
-		assert(!rowClearingAnimation.IsAnimating());
-
-		auto location = grid.GetCurrentPieceLocation();
-		int screenX = location.X * cellSize;
-		int screenY = location.Y * cellSize;
-
-		// Ensure camera is centered on the piece itself
-		cameraTargetX = screenX + (cellSize * 2);
-		cameraTargetY = screenY + (cellSize * 1);
-	}
-
-	void SetCameraTargetRotation()
-	{
-		cameraTargetRotation = RotationIndexToRadians(grid.GetCurrentPieceRotation());
-	}
 
 	/*
 	void EnsurePrebakedDrawing(
@@ -1164,182 +1319,4 @@ class MainPage
 		ds.DrawImage(piecesBitmap, destinationRectangle, sourceRectangle);
 	}*/
 
-	void canvas_Update()
-	{
-		if (gameOver)
-		{
-			UpdateWeirdBackgroundScrolling();
-			return; // No animating
-		}
-
-		UpdateBackgroundScrolling();
-
-		if (rowClearingAnimation.IsAnimating())
-		{
-			rowClearingAnimation.Update();
-
-			if (!rowClearingAnimation.IsAnimating())
-			{
-				grid.PurgeClearedRows();
-			}
-		}
-		else
-		{
-			UpdateTimedDrop();
-
-			UpdateForcedDrop();
-
-			if (!rowClearingAnimation.IsAnimating())
-			{
-				UpdateCamera();
-			}
-		}
-	}
-
-	void UpdateWeirdBackgroundScrolling()
-	{
-		float backgroundScrollInc = 0.5f;
-
-		if (random.Next(2) == 0)
-			backgroundScrollInc = -backgroundScrollInc;
-
-		backgroundScrollX += backgroundScrollInc;
-
-		if (random.Next(2) == 0)
-			backgroundScrollInc = -backgroundScrollInc;
-
-		backgroundScrollY += backgroundScrollInc;
-	}
-
-	void UpdateBackgroundScrolling()
-	{
-		float backgroundScrollInc = 0.5f;
-		backgroundScrollX += backgroundScrollInc;
-		if (backgroundScrollX > 400)
-			backgroundScrollX = 0;
-
-		backgroundScrollY += backgroundScrollInc;
-		if (backgroundScrollY > 431)
-			backgroundScrollY = 0;
-	}
-
-	void UpdateForcedDrop()
-	{
-		if (!forcingDrop)
-			return;
-
-		if (rowClearingAnimation.IsAnimating())
-		{
-			forcingDrop = false;
-			return;
-		}
-
-		auto dropResult = grid.DropPiece(true);
-
-		if (dropResult == DropPieceResult::None)
-		{
-			SetCameraTargetXY();
-			SetCameraTargetRotation();
-		}
-		else if (dropResult == DropPieceResult::PieceLanded)
-		{
-			SetCameraTargetXY();
-			SetCameraTargetRotation();
-			forcingDrop = false;
-		}
-		else if (dropResult == DropPieceResult::GameOver)
-		{
-			gameOver = true;
-		}
-		else if (dropResult == DropPieceResult::RowsCleared)
-		{
-			rowClearingAnimation.Start();
-			forcingDrop = false;
-		}
-
-	}
-
-	void UpdateTimedDrop()
-	{
-		if (framesUntilPieceDrop <= 0)
-		{
-			auto dropResult = grid.DropPiece(false);
-
-			if (dropResult == DropPieceResult::None || dropResult == DropPieceResult::PieceLanded)
-			{
-				framesUntilPieceDrop = framesPerPieceDrop;
-
-				SetCameraTargetXY();
-				SetCameraTargetRotation();
-			}
-			else if (dropResult == DropPieceResult::GameOver)
-			{
-				gameOver = true;
-			}
-			else if (dropResult == DropPieceResult::RowsCleared)
-			{
-				framesUntilPieceDrop = framesPerPieceDrop;
-
-				rowClearingAnimation.Start();
-			}
-		}
-		else
-		{
-			framesUntilPieceDrop--;
-		}
-	}
-
-	void UpdateCamera()
-	{
-		assert(!rowClearingAnimation.IsAnimating());
-
-		float cameraIncXAmt = 4;
-		float cameraIncYAmt = cameraIncXAmt;
-
-		float cameraDispX = cameraTargetX - cameraX;
-		float cameraDispY = cameraTargetY - cameraY;
-
-		if (abs(cameraDispX) > cellSize)
-			cameraIncXAmt = cellSize * 3;
-
-		if (abs(cameraDispY) > cellSize)
-			cameraIncYAmt = cellSize * 3;
-
-		if (cameraX < cameraTargetX)
-		{
-			cameraX += cameraIncXAmt;
-			cameraX = min(cameraX, cameraTargetX);
-		}
-		if (cameraX > cameraTargetX)
-		{
-			cameraX -= cameraIncXAmt;
-			cameraX = max(cameraX, cameraTargetX);
-		}
-		if (cameraY < cameraTargetY)
-		{
-			cameraY += cameraIncYAmt;
-			cameraY = min(cameraY, cameraTargetY);
-		}
-		if (cameraY > cameraTargetY)
-		{
-			cameraY -= cameraIncYAmt;
-			cameraY = max(cameraY, cameraTargetY);
-		}
-
-		float cameraIncRotationAmt = 0.5f;
-		if (cameraRotation < cameraTargetRotation)
-		{
-			cameraRotation += cameraIncRotationAmt;
-			cameraRotation = min(cameraRotation, cameraTargetRotation);
-		}
-		if (cameraRotation > cameraTargetRotation)
-		{
-			cameraRotation += cameraIncRotationAmt;
-			cameraRotation = min(cameraRotation, 2 * MATH_PI);
-		}
-		if (cameraRotation >= 2 * MATH_PI)
-		{
-			cameraRotation = 0;
-		}
-	}
 };
