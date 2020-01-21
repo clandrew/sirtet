@@ -17,8 +17,6 @@ struct FourCoordinates
 
 struct PieceLayout
 {
-	void Initialize(int numberOfRotationFrames);
-
 	void AddRotation(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3);
 
 	std::vector<FourCoordinates> EachRotation;
@@ -65,9 +63,13 @@ class Grid
 	std::vector<int> rowsBeingCleared;
 
 	Random random;
+
+	int m_blockSize;
+	int m_blocksXCount;
+	int m_blocksYCount;
 	
 public:
-	Grid();
+	void Initialize(int blockSize, int blocksXCount, int blocksYCount);
 
 	void Reset();
 
@@ -188,14 +190,15 @@ public:
 	void Initialize(HWND hwnd);
 	void Draw();
 	void Resize(HWND hwnd);
+	void OnTimerTick();
+	void OnKeyDown(WPARAM key);
+	void OnKeyUp(WPARAM key);
 
 private:
 	void EnsureWicImagingFactory();
 	ComPtr<ID2D1Bitmap1> LoadImageFile(std::wstring fileName);
 	void DrawBlock(int x, int y);
 	void NewGame();
-	void OnKeyDown(WPARAM key);
-	void OnKeyUp(WPARAM key);
 	void SetCameraTargetXY();
 	void SetCameraTargetRotation();
 	void UpdateCamera();
@@ -203,7 +206,6 @@ private:
 	void UpdateForcedDrop();
 	void UpdateBackgroundScrolling();
 	void UpdateWeirdBackgroundScrolling();
-	void canvas_Update();
 
 	int m_blockSize;
 	int m_blocksXCount;

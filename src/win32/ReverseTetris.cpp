@@ -83,6 +83,17 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
+void __stdcall TimerProc(
+	HWND Arg1,
+	UINT Arg2,
+	UINT_PTR Arg3,
+	DWORD Arg4
+)
+{
+	g_graphics.OnTimerTick();
+	g_graphics.Draw();
+}
+
 //
 //   FUNCTION: InitInstance(HINSTANCE, int)
 //
@@ -119,6 +130,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
+
+   SetTimer(hWnd, -1, 30, TimerProc);
 
    return TRUE;
 }
@@ -165,6 +178,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		{
 			g_graphics.Resize(hWnd);
+		}
+		break;
+	case WM_KEYDOWN:
+		{
+			g_graphics.OnKeyDown(wParam);
+		}
+		break;
+	case WM_KEYUP:
+		{
+			g_graphics.OnKeyUp(wParam);
 		}
 		break;
     case WM_DESTROY:

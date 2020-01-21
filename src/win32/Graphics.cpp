@@ -3,8 +3,6 @@
 
 enum PieceType { I, L, O, R, S, T, Z };
 
-const int gridWidth = 10;
-const int gridHeight = 20;
 const int cellSize = 25;
 const float MATH_PI = 3.14159f;
 
@@ -34,12 +32,6 @@ void FourCoordinates::Initialize(int x0, int y0, int x1, int y1, int x2, int y2,
 	Location[3] = { x3, y3 };
 }
 
-void PieceLayout::Initialize(int numberOfRotationFrames)
-{
-	assert(numberOfRotationFrames >= 1 && numberOfRotationFrames <= 4);
-	EachRotation.resize(numberOfRotationFrames);
-}
-
 void PieceLayout::AddRotation(int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	FourCoordinates f;
@@ -57,47 +49,44 @@ int Random::Next(int n)
 	return rand() % n;
 }
 
-Grid::Grid()
+void Grid::Initialize(int blockSize, int blocksXCount, int blocksYCount)
 {
+	m_blockSize = blockSize;
+	m_blocksXCount = blocksXCount;
+	m_blocksYCount = blocksYCount;
+
 	pieceLayouts.resize(7);
 
 	// I
-	pieceLayouts[0].Initialize(2);
 	pieceLayouts[0].AddRotation(0, 0, 1, 0, 2, 0, 3, 0);
 	pieceLayouts[0].AddRotation(2, -2, 2, -1, 2, 0, 2, 1);
 
 	// L
-	pieceLayouts[1].Initialize(4);
 	pieceLayouts[1].AddRotation(1, 0, 2, 0, 3, 0, 1, 1);
 	pieceLayouts[1].AddRotation(2, -1, 2, 0, 2, 1, 3, 1);
 	pieceLayouts[1].AddRotation(1, 0, 2, 0, 3, 0, 3, -1);
 	pieceLayouts[1].AddRotation(1, -1, 2, -1, 2, 0, 2, 1);
 
 	// O
-	pieceLayouts[2].Initialize(1);
 	pieceLayouts[2].AddRotation(1, 0, 2, 0, 1, 1, 2, 1);
 
 	// R
-	pieceLayouts[3].Initialize(4);
 	pieceLayouts[3].AddRotation(1, 0, 2, 0, 3, 0, 3, 1);
 	pieceLayouts[3].AddRotation(2, -1, 3, -1, 2, 0, 2, 1);
 	pieceLayouts[3].AddRotation(1, -1, 1, 0, 2, 0, 3, 0);
 	pieceLayouts[3].AddRotation(2, -1, 2, 0, 1, 1, 2, 1);
 
 	// S
-	pieceLayouts[4].Initialize(2);
 	pieceLayouts[4].AddRotation(2, 0, 3, 0, 1, 1, 2, 1);
 	pieceLayouts[4].AddRotation(2, -1, 2, 0, 3, 0, 3, 1);
 
 	// T
-	pieceLayouts[5].Initialize(4);
 	pieceLayouts[5].AddRotation(1, 0, 2, 0, 3, 0, 2, 1);
 	pieceLayouts[5].AddRotation(2, -1, 2, 0, 3, 0, 2, 1);
 	pieceLayouts[5].AddRotation(2, -1, 1, 0, 2, 0, 3, 0);
 	pieceLayouts[5].AddRotation(2, -1, 1, 0, 2, 0, 2, 1);
 
 	// Z
-	pieceLayouts[6].Initialize(2);
 	pieceLayouts[6].AddRotation(1, 0, 2, 0, 2, 1, 3, 1);
 	pieceLayouts[6].AddRotation(3, -1, 2, 0, 3, 0, 2, 1);
 
@@ -115,7 +104,7 @@ Grid::Grid()
 
 void Grid::Reset()
 {
-	for (int i = 0; i < gridWidth * gridHeight; ++i)
+	for (int i = 0; i < m_blocksXCount * m_blocksYCount; ++i)
 	{
 		data.push_back(-1);
 	}
@@ -141,10 +130,10 @@ bool Grid::SetCell(int x, int y, int value, bool allowOverwrite)
 	if (y < 0)
 		return false;
 
-	if (!allowOverwrite && data[y * gridWidth + x] != -1)
+	if (!allowOverwrite && data[y * m_blocksXCount + x] != -1)
 		return false;
 
-	data[y * gridWidth + x] = value;
+	data[y * m_blocksXCount + x] = value;
 	return true;
 }
 
@@ -155,13 +144,13 @@ int Grid::GetCell(int x, int y)
 	if (y < 0)
 		return -1;
 
-	return data[y * gridWidth + x];
+	return data[y * m_blocksXCount + x];
 }
 
 void Grid::ValidateBounds(int x, int y)
 {
-	assert(x >= 0 && x < gridWidth);
-	assert(y < gridHeight);
+	assert(x >= 0 && x < m_blocksXCount);
+	assert(y < m_blocksYCount);
 }
 
 bool Grid::TryRotatePiece()
@@ -228,7 +217,7 @@ DropPieceResult Grid::DropPiece(bool forcedDrop)
 
 bool Grid::IsRowClear(int y)
 {
-	for (int x = 0; x < gridWidth; ++x)
+	for (int x = 0; x < m_blocksXCount; ++x)
 	{
 		if (GetCell(x, y) == -1)
 		{
@@ -242,7 +231,7 @@ void Grid::MoveEverythingDown(int yStoppingPoint)
 {
 	for (int y = yStoppingPoint; y >= 0; --y)
 	{
-		for (int x = 0; x < gridWidth; ++x)
+		for (int x = 0; x < m_blocksXCount; ++x)
 		{
 			int newValue;
 
@@ -259,7 +248,7 @@ void Grid::MoveEverythingDown(int yStoppingPoint)
 void Grid::ProcessAnyClearedRows()
 {
 	int rowsClearedThisMove = 0;
-	for (int y = 0; y < gridHeight; ++y)
+	for (int y = 0; y < m_blocksYCount; ++y)
 	{
 		if (IsRowClear(y))
 		{
@@ -329,7 +318,7 @@ bool Grid::CanPlacePieceAt(FourCoordinates coordinates)
 		Coordinate l = coordinates.Location[i];
 
 		// No comparison for y < 0, since pieces are allowed to hang off the top.
-		if (l.X < 0 || l.X >= gridWidth || l.Y >= gridHeight)
+		if (l.X < 0 || l.X >= m_blocksXCount || l.Y >= m_blocksYCount)
 			return false;
 
 		int cell = GetCell(l.X, l.Y);
@@ -462,6 +451,8 @@ void Graphics::Initialize(HWND hwnd)
 	m_blocksXCount = 10;
 	m_blocksYCount = 16;
 
+	grid.Initialize(m_blockSize, m_blocksXCount, m_blocksYCount);
+
 	D2D1_FACTORY_OPTIONS factoryOptions = {};
 	factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
 	VerifyHR(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory1), &factoryOptions, &m_d2dFactory));
@@ -483,7 +474,7 @@ void Graphics::Initialize(HWND hwnd)
 	m_ui = LoadImageFile(L"Images\\ui.png");
 	m_blocks = LoadImageFile(L"Images\\blocks.png");
 
-	framesPerPieceDrop = 50;
+	framesPerPieceDrop = 10;
 
 	loserMode = false;
 
@@ -596,10 +587,43 @@ void Graphics::Resize(HWND hwnd)
 	VerifyHR(m_renderTarget->Resize(newSize));
 }
 
+void Graphics::OnTimerTick()
+{
+	if (gameOver)
+	{
+		UpdateWeirdBackgroundScrolling();
+		return; // No animating
+	}
+
+	//UpdateBackgroundScrolling();
+
+	if (rowClearingAnimation.IsAnimating())
+	{
+		rowClearingAnimation.Update();
+
+		if (!rowClearingAnimation.IsAnimating())
+		{
+			grid.PurgeClearedRows();
+		}
+	}
+	else
+	{
+		UpdateTimedDrop();
+
+		UpdateForcedDrop();
+
+		if (!rowClearingAnimation.IsAnimating())
+		{
+			UpdateCamera();
+		}
+	}
+}
+
 void Graphics::DrawBlock(int x, int y)
 {
-	assert(x >= 0 && x < m_blocksXCount);
-	assert(y >= 0 && y < m_blocksYCount);
+	// The current piece might have an edge which goes outside the grid. We just ignore those.
+	if (x < 0 ||y < 0 || x >= m_blocksXCount || y >= m_blocksYCount) 
+		return;
 
 	D2D1_RECT_F srcRect = D2D1::RectF(0, 0, m_blockSize, m_blockSize);
 	D2D1_RECT_F dstRect{};
@@ -637,14 +661,31 @@ void Graphics::Draw()
 
 		D2D1_MATRIX_3X2_F gridOrigin = D2D1::Matrix3x2F::Translation(35, 8);
 		m_native->SetTransform(gridOrigin* rotate);
-
-		// Draw a full set of blocks
-		for (int y = 0; y < m_blocksYCount; ++y)
+		
+		// Draw the grid
+		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
 		{
-			for (int x = 0; x < m_blocksXCount; ++x)
+			for (int cellX = 0; cellX < m_blocksXCount; ++cellX)
 			{
-				DrawBlock(x, y);
+				int cell = grid.GetCell(cellX, cellY);
+
+				if (cell == -1)
+				{
+					// No color.
+				}
+				else
+				{
+					DrawBlock(cellX, cellY);
+				}
 			}
+		}
+
+		auto currentPiece = grid.GetCurrentPieceCoordinates();
+
+		// Draw the current piece
+		for (int i = 0; i < 4; ++i)
+		{
+			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y);
 		}
 
 		VerifyHR(m_native->EndDraw());
@@ -814,38 +855,6 @@ void Graphics::SetCameraTargetRotation()
 	cameraTargetRotation = RotationIndexToRadians(grid.GetCurrentPieceRotation());
 }
 
-void Graphics::canvas_Update()
-{
-	if (gameOver)
-	{
-		UpdateWeirdBackgroundScrolling();
-		return; // No animating
-	}
-
-	UpdateBackgroundScrolling();
-
-	if (rowClearingAnimation.IsAnimating())
-	{
-		rowClearingAnimation.Update();
-
-		if (!rowClearingAnimation.IsAnimating())
-		{
-			grid.PurgeClearedRows();
-		}
-	}
-	else
-	{
-		UpdateTimedDrop();
-
-		UpdateForcedDrop();
-
-		if (!rowClearingAnimation.IsAnimating())
-		{
-			UpdateCamera();
-		}
-	}
-}
-
 void Graphics::UpdateWeirdBackgroundScrolling()
 {
 	float backgroundScrollInc = 0.5f;
@@ -998,11 +1007,6 @@ void Graphics::UpdateCamera()
 class MainPage
 {
 
-	MainPage()
-	{
-	}
-
-
 	void canvas_CreateResources()
 	{
 		/*
@@ -1027,8 +1031,8 @@ class MainPage
 
 	/*
 	void EnsurePrebakedDrawing(
-		float gridWidthInDips,
-		float gridHeightInDips,
+		float m_blocksXCountInDips,
+		float m_blocksYCountInDips,
 		Rect gridBackground,
 		Rect nextPieceArea,
 		Rect statisticsArea,
@@ -1054,8 +1058,8 @@ class MainPage
 			ds.DrawRectangle(margin, margin, (float)prebakedDrawing.Size.Width - margin - margin, (float)prebakedDrawing.Size.Height - margin - margin, Colors.Black, 2);
 
 			// Fixed camera
-			float cameraX = gridWidthInDips / 2;
-			float cameraY = gridHeightInDips / 2;
+			float cameraX = m_blocksXCountInDips / 2;
+			float cameraY = m_blocksYCountInDips / 2;
 
 			var translate = Matrix3x2.CreateTranslation(
 				((float)prebakedDrawing.Size.Width / 2) - cameraX,
@@ -1102,13 +1106,13 @@ class MainPage
 
 		float targetWidth = (float)sender.Size.Width;
 		float targetHeight = (float)sender.Size.Height;
-		float gridWidthInDips = gridWidth * cellSize;
-		float gridHeightInDips = gridHeight * cellSize;
+		float m_blocksXCountInDips = m_blocksXCount * cellSize;
+		float m_blocksYCountInDips = m_blocksYCount * cellSize;
 
 		// Some layout stuff
 		float nextPieceGridSizeInDips = 5 * cellSize;
-		Rect nextPieceArea = new Rect(gridWidthInDips + 100, 150, nextPieceGridSizeInDips, nextPieceGridSizeInDips);
-		Rect gridBackground = new Rect(0, 0, gridWidthInDips, gridHeightInDips);
+		Rect nextPieceArea = new Rect(m_blocksXCountInDips + 100, 150, nextPieceGridSizeInDips, nextPieceGridSizeInDips);
+		Rect gridBackground = new Rect(0, 0, m_blocksXCountInDips, m_blocksYCountInDips);
 		Rect statisticsArea = new Rect(-275, 0, 175, 500);
 		Rect linesClearedArea = new Rect(0, -120, 250, 50);
 
@@ -1116,13 +1120,13 @@ class MainPage
 		args.DrawingSession.TextAntialiasing = CanvasTextAntialiasing.Aliased;
 		args.DrawingSession.Transform = Matrix3x2.Identity;
 
-		var cameraTransforms = GetCameraTransforms(args, targetWidth, targetHeight, gridWidthInDips, gridHeightInDips);
+		var cameraTransforms = GetCameraTransforms(args, targetWidth, targetHeight, m_blocksXCountInDips, m_blocksYCountInDips);
 
 		// Patterned background
 		backgroundBitmapBrush.Transform = Matrix3x2.CreateTranslation(backgroundScrollX, backgroundScrollY) * cameraTransforms.Final;
 		args.DrawingSession.FillRectangle(0, 0, targetWidth, targetHeight, backgroundBitmapBrush);
 
-		EnsurePrebakedDrawing(gridWidthInDips, gridHeightInDips, gridBackground, nextPieceArea, statisticsArea, linesClearedArea);
+		EnsurePrebakedDrawing(m_blocksXCountInDips, m_blocksYCountInDips, gridBackground, nextPieceArea, statisticsArea, linesClearedArea);
 
 		// Draw prebaked content
 		args.DrawingSession.Transform = cameraTransforms.Prebaked;
@@ -1134,14 +1138,14 @@ class MainPage
 		args.DrawingSession.Transform = cameraTransforms.Final;
 
 		DrawNextPieceUI(args, nextPieceArea);
-		DrawStatisticsUI(args, gridWidthInDips, statisticsArea);
+		DrawStatisticsUI(args, m_blocksXCountInDips, statisticsArea);
 		DrawLinesClearedUI(args, linesClearedArea);
-		DrawScoreUI(args, gridWidthInDips);
+		DrawScoreUI(args, m_blocksXCountInDips);
 
 		// Draw the grid
-		for (int cellY = 0; cellY < gridHeight; ++cellY)
+		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
 		{
-			for (int cellX = 0; cellX < gridWidth; ++cellX)
+			for (int cellX = 0; cellX < m_blocksXCount; ++cellX)
 			{
 				int cell = grid.GetCell(cellX, cellY);
 
@@ -1186,7 +1190,7 @@ class MainPage
 			white.A = 180;
 			foreach(var row in rowsBeingCleared)
 			{
-				args.DrawingSession.FillRectangle(0, row * cellSize, gridWidthInDips, cellSize, white);
+				args.DrawingSession.FillRectangle(0, row * cellSize, m_blocksXCountInDips, cellSize, white);
 			}
 		}
 
@@ -1204,7 +1208,7 @@ class MainPage
 	}
 
 	/*
-	CameraTransforms GetCameraTransforms(CanvasAnimatedDrawEventArgs args, float targetWidth, float targetHeight, float gridWidthInDips, float gridHeightInDips)
+	CameraTransforms GetCameraTransforms(CanvasAnimatedDrawEventArgs args, float targetWidth, float targetHeight, float m_blocksXCountInDips, float m_blocksYCountInDips)
 	{
 		CameraTransforms result = new CameraTransforms();
 
@@ -1222,8 +1226,8 @@ class MainPage
 			var moveToCenter = Matrix3x2.CreateTranslation(targetWidth / 2, targetHeight / 2);
 
 			var prebakedInv = Matrix3x2.CreateTranslation(
-				-(targetWidth / 2) + (gridWidthInDips / 2),
-				-(targetHeight / 2) + (gridHeightInDips / 2));
+				-(targetWidth / 2) + (m_blocksXCountInDips / 2),
+				-(targetHeight / 2) + (m_blocksYCountInDips / 2));
 
 			result.Prebaked = prebakedInv * movePieceToOrigin * rotate * moveToCenter;
 			result.Final = movePieceToOrigin * rotate * moveToCenter;
@@ -1231,8 +1235,8 @@ class MainPage
 		else
 		{
 			// Fixed camera
-			float cameraX = gridWidthInDips / 2;
-			float cameraY = gridHeightInDips / 2;
+			float cameraX = m_blocksXCountInDips / 2;
+			float cameraY = m_blocksYCountInDips / 2;
 
 			result.Prebaked = Matrix3x2.Identity;
 			result.Final = Matrix3x2.CreateTranslation((targetWidth / 2) - cameraX, (targetHeight / 2) - cameraY);
@@ -1241,7 +1245,7 @@ class MainPage
 	}*/
 
 	/*
-	private void DrawStatisticsUI(CanvasAnimatedDrawEventArgs args, float gridWidthInDips, Rect statisticsArea)
+	private void DrawStatisticsUI(CanvasAnimatedDrawEventArgs args, float m_blocksXCountInDips, Rect statisticsArea)
 	{
 		int y = (int)statisticsArea.Y;
 
@@ -1274,9 +1278,9 @@ class MainPage
 		args.DrawingSession.DrawText(formatString, (float)linesClearedArea.X, (float)linesClearedArea.Y, Colors.White, headingTextFormat);
 	}
 
-	private void DrawScoreUI(CanvasAnimatedDrawEventArgs args, float gridWidthInDips)
+	private void DrawScoreUI(CanvasAnimatedDrawEventArgs args, float m_blocksXCountInDips)
 	{
-		Rect background = new Rect(gridWidthInDips + 100, -50, 100, 100);
+		Rect background = new Rect(m_blocksXCountInDips + 100, -50, 100, 100);
 		FillDarkBackground(args.DrawingSession, background);
 
 		int score = grid.GetScore();
