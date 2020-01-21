@@ -183,11 +183,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		{
 			g_graphics.OnKeyDown(wParam);
+			g_graphics.Draw();
 		}
 		break;
 	case WM_KEYUP:
 		{
 			g_graphics.OnKeyUp(wParam);
+			g_graphics.Draw();
 		}
 		break;
     case WM_DESTROY:

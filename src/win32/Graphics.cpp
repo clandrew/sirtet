@@ -478,6 +478,7 @@ void Graphics::Initialize(HWND hwnd)
 	VerifyHR(m_renderTarget->CreateCompatibleRenderTarget(D2D1::SizeF(128, 112), &m_native));
 
 	VerifyHR(m_native->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.8f), &m_whiteBrush));
+	VerifyHR(m_native->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Magenta), &m_magentaBrush));
 
 	m_bg = LoadImageFile(L"Images\\testbg.png");
 	m_ui = LoadImageFile(L"Images\\ui.png");
@@ -649,13 +650,15 @@ void Graphics::DrawBlock(int x, int y, Color c)
 
 void Graphics::Draw()
 {
+	float srcWidth = 128;
+	float srcHeight = 112;
+
 	{
 		m_native->BeginDraw();
 		m_native->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		m_native->Clear(D2D1::ColorF(D2D1::ColorF::Magenta)); // Debug color; should be covered
 
-		D2D1_MATRIX_3X2_F rotate = D2D1::Matrix3x2F::Rotation(0);
-		m_native->SetTransform(rotate);
+		m_native->SetTransform(D2D1::Matrix3x2F::Identity());
 
 		// Draw BG
 		{
@@ -663,18 +666,34 @@ void Graphics::Draw()
 			D2D1_RECT_F dstRect = D2D1::RectF(0, 0, 128, 112);
 			m_native->DrawBitmap(m_bg.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
+		
+		auto currentPieceLocation = grid.GetCurrentPieceLocation();
+		auto gridTransform = D2D1::Matrix3x2F::Translation(52 - (currentPieceLocation.X * 6), 51 - (currentPieceLocation.Y * 6));
+
+		int uiBorderThickness = 5;
+		auto uiTransform = D2D1::Matrix3x2F::Translation(52 - uiBorderThickness - (currentPieceLocation.X * 6), 51  - uiBorderThickness - (currentPieceLocation.Y * 6));
+
+		auto nextPieceTransform = D2D1::Matrix3x2F::Translation(52 + 72 - 6 - (currentPieceLocation.X * 6), 51 + 15 - 6 - (currentPieceLocation.Y * 6));
 
 		// Draw the UI
+		m_native->SetTransform(uiTransform);
 		{
 			// m_ui
 			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 98, 107);
-			D2D1_RECT_F dstRect = D2D1::RectF(30, 3, 30+98, 3+107);
+			int x = 0;
+			int y = 0;
+			D2D1_RECT_F dstRect = D2D1::RectF(x, y, x + 98, y + 107);
 			m_native->DrawBitmap(m_ui.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 
-		D2D1_MATRIX_3X2_F gameplayGridOrigin = D2D1::Matrix3x2F::Translation(35, 8);
-		m_native->SetTransform(gameplayGridOrigin * rotate);
-		
+		// Draw the current piece
+		m_native->SetTransform(gridTransform);
+		auto currentPiece = grid.GetCurrentPieceCoordinates();
+		for (int i = 0; i < 4; ++i)
+		{
+			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y, (Color)grid.GetCurrentPieceType());
+		}
+
 		// Draw the grid
 		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
 		{
@@ -691,13 +710,6 @@ void Graphics::Draw()
 					DrawBlock(cellX, cellY, (Color)cell);
 				}
 			}
-		}
-
-		// Draw the current piece
-		auto currentPiece = grid.GetCurrentPieceCoordinates();
-		for (int i = 0; i < 4; ++i)
-		{
-			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y, (Color)grid.GetCurrentPieceType());
 		}
 
 		// Row-clearing animation
@@ -720,7 +732,7 @@ void Graphics::Draw()
 
 
 		D2D1_MATRIX_3X2_F nextPieceOrigin = D2D1::Matrix3x2F::Translation(101, 17);
-		m_native->SetTransform(nextPieceOrigin * rotate);
+		m_native->SetTransform(nextPieceTransform);
 		auto nextPiece = grid.GetNextPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
@@ -734,8 +746,6 @@ void Graphics::Draw()
 		m_renderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 		m_renderTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black));
 
-		float srcWidth = 128;
-		float srcHeight = 112;
 		D2D1_RECT_F srcRect = D2D1::RectF(0, 0, srcWidth, srcHeight);
 		float goalRatio = srcWidth / srcHeight;
 
@@ -769,6 +779,8 @@ void Graphics::Draw()
 		VerifyHR(m_native->GetBitmap(&bitmapRenderTarget));
 		m_renderTarget->DrawBitmap(bitmapRenderTarget.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 
+		m_renderTarget->DrawLine(D2D1::Point2F(targetWidth/2, 0), D2D1::Point2F(targetWidth / 2, targetHeight), m_magentaBrush.Get(), 5.0f);
+		m_renderTarget->DrawLine(D2D1::Point2F(0, targetHeight/2), D2D1::Point2F(targetWidth, targetHeight / 2), m_magentaBrush.Get(), 5.0f);
 
 
 		VerifyHR(m_renderTarget->EndDraw());
@@ -1040,326 +1052,3 @@ void Graphics::UpdateCamera()
 		cameraRotation = 0;
 	}
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////xxx
-
-class MainPage
-{
-
-	void canvas_CreateResources()
-	{
-		/*
-		prebakedDrawing = new CanvasRenderTarget(sender, sender.Size);
-
-		CanvasBitmap bitmap = await CanvasBitmap.LoadAsync(sender, new Uri("ms-appx:///Assets/BG.png"));
-		backgroundBitmapBrush = new CanvasImageBrush(sender, bitmap);
-		backgroundBitmapBrush.SourceRectangle = new Rect(bitmap.Bounds.X, bitmap.Bounds.Y, bitmap.Bounds.Width, bitmap.Bounds.Height);
-		backgroundBitmapBrush.ExtendX = CanvasEdgeBehavior.Wrap;
-		backgroundBitmapBrush.ExtendY = CanvasEdgeBehavior.Wrap;
-		backgroundBitmapBrush.Interpolation = CanvasImageInterpolation.NearestNeighbor;
-
-		piecesBitmap = await CanvasBitmap.LoadAsync(sender, new Uri("ms-appx:///Assets/Pieces.png"));
-
-		headingTextFormat = new CanvasTextFormat();
-		headingTextFormat.FontFamily = "Times New Roman";
-		headingTextFormat.FontSize = 30;
-
-		finishedLoadingResources = true;*/
-	}
-
-
-	/*
-	void EnsurePrebakedDrawing(
-		float m_blocksXCountInDips,
-		float m_blocksYCountInDips,
-		Rect gridBackground,
-		Rect nextPieceArea,
-		Rect statisticsArea,
-		Rect linesClearedArea)
-	{
-		if (prebakedDrawingValid)
-			return;
-
-		// This pre-baked image will be drawn at the camera transform.
-		using (var ds = prebakedDrawing.CreateDrawingSession())
-		{
-			ds.Antialiasing = CanvasAntialiasing.Aliased;
-			ds.TextAntialiasing = CanvasTextAntialiasing.Aliased;
-
-			ds.Clear(Colors.Transparent);
-
-			ds.DrawRectangle(0, 0, (float)prebakedDrawing.Size.Width, (float)prebakedDrawing.Size.Height, Colors.Black, 15);
-
-			float margin = 30;
-			ds.DrawRectangle(margin, margin, (float)prebakedDrawing.Size.Width - margin - margin, (float)prebakedDrawing.Size.Height - margin - margin, Colors.Black, 2);
-
-			margin = 25;
-			ds.DrawRectangle(margin, margin, (float)prebakedDrawing.Size.Width - margin - margin, (float)prebakedDrawing.Size.Height - margin - margin, Colors.Black, 2);
-
-			// Fixed camera
-			float cameraX = m_blocksXCountInDips / 2;
-			float cameraY = m_blocksYCountInDips / 2;
-
-			var translate = Matrix3x2.CreateTranslation(
-				((float)prebakedDrawing.Size.Width / 2) - cameraX,
-				((float)prebakedDrawing.Size.Height / 2) - cameraY);
-			ds.Transform = translate;
-			FillDarkBackground(ds, gridBackground);
-
-			FillDarkBackground(ds, nextPieceArea);
-			DrawStyledText(ds, "Next", (float)nextPieceArea.X, (float)nextPieceArea.Y);
-
-			FillDarkBackground(ds, statisticsArea);
-
-			DrawStyledText(ds, "Statistics", (float)statisticsArea.X, (float)statisticsArea.Y);
-
-			int y = (int)statisticsArea.Y;
-
-			PieceType[] types = new PieceType[]{ PieceType.T, PieceType.R, PieceType.Z, PieceType.O, PieceType.S, PieceType.L, PieceType.I };
-
-			foreach(var type in types)
-			{
-				var coords = grid.GetPieceCoordinates((int)type);
-				for (int i = 0; i < 4; ++i)
-				{
-					DrawBlock(ds, coords.Location[i].X, coords.Location[i].Y, (int)type, (int)statisticsArea.X, y);
-				}
-				y += 65;
-			}
-
-			FillDarkBackground(ds, linesClearedArea);
-
-			var targetRectangle = CanvasGeometry.CreateRectangle(ds, 0, 0, (float)prebakedDrawing.Size.Width, (float)prebakedDrawing.Size.Height);
-			var hugeRectangle = CanvasGeometry.CreateRectangle(ds, -10000, -10000, 20000, 20000);
-			prebakedGeometryInverseRegion = hugeRectangle.CombineWith(targetRectangle, Matrix3x2.Identity, CanvasGeometryCombine.Exclude);
-		}
-
-		prebakedDrawingValid = true;
-	}*/
-
-	void canvas_Draw()
-	{
-		/*
-		if (!finishedLoadingResources)
-			return;
-
-		float targetWidth = (float)sender.Size.Width;
-		float targetHeight = (float)sender.Size.Height;
-		float m_blocksXCountInDips = m_blocksXCount * cellSize;
-		float m_blocksYCountInDips = m_blocksYCount * cellSize;
-
-		// Some layout stuff
-		float nextPieceGridSizeInDips = 5 * cellSize;
-		Rect nextPieceArea = new Rect(m_blocksXCountInDips + 100, 150, nextPieceGridSizeInDips, nextPieceGridSizeInDips);
-		Rect gridBackground = new Rect(0, 0, m_blocksXCountInDips, m_blocksYCountInDips);
-		Rect statisticsArea = new Rect(-275, 0, 175, 500);
-		Rect linesClearedArea = new Rect(0, -120, 250, 50);
-
-		args.DrawingSession.Antialiasing = CanvasAntialiasing.Aliased;
-		args.DrawingSession.TextAntialiasing = CanvasTextAntialiasing.Aliased;
-		args.DrawingSession.Transform = Matrix3x2.Identity;
-
-		var cameraTransforms = GetCameraTransforms(args, targetWidth, targetHeight, m_blocksXCountInDips, m_blocksYCountInDips);
-
-		// Patterned background
-		backgroundBitmapBrush.Transform = Matrix3x2.CreateTranslation(backgroundScrollX, backgroundScrollY) * cameraTransforms.Final;
-		args.DrawingSession.FillRectangle(0, 0, targetWidth, targetHeight, backgroundBitmapBrush);
-
-		EnsurePrebakedDrawing(m_blocksXCountInDips, m_blocksYCountInDips, gridBackground, nextPieceArea, statisticsArea, linesClearedArea);
-
-		// Draw prebaked content
-		args.DrawingSession.Transform = cameraTransforms.Prebaked;
-		args.DrawingSession.DrawImage(prebakedDrawing);
-		Color black = Colors.Black;
-		black.A = 128;
-		args.DrawingSession.FillGeometry(prebakedGeometryInverseRegion, black);
-
-		args.DrawingSession.Transform = cameraTransforms.Final;
-
-		DrawNextPieceUI(args, nextPieceArea);
-		DrawStatisticsUI(args, m_blocksXCountInDips, statisticsArea);
-		DrawLinesClearedUI(args, linesClearedArea);
-		DrawScoreUI(args, m_blocksXCountInDips);
-
-		// Draw the grid
-		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
-		{
-			for (int cellX = 0; cellX < m_blocksXCount; ++cellX)
-			{
-				int cell = grid.GetCell(cellX, cellY);
-
-				if (cell == -1)
-				{
-					// No color.
-				}
-				else
-				{
-					DrawBlock(args.DrawingSession, cellX, cellY, cell);
-				}
-			}
-		}
-
-		var currentPiece = grid.GetCurrentPieceCoordinates();
-
-		// Draw the current piece
-		for (int i = 0; i < 4; ++i)
-		{
-			DrawBlock(args.DrawingSession, currentPiece.Location[i].X, currentPiece.Location[i].Y, grid.GetCurrentPieceType());
-		}
-
-		if (gameOver)
-		{
-			args.DrawingSession.Transform = Matrix3x2.Identity;
-			Color semitransparentBlack = Colors.Black;
-			semitransparentBlack.A = 128;
-			args.DrawingSession.FillRectangle(0, 0, targetWidth, targetHeight, semitransparentBlack);
-
-			CanvasTextFormat sadText = new CanvasTextFormat();
-			sadText.FontFamily = "Times New Roman";
-			sadText.FontSize = 300;
-
-			args.DrawingSession.DrawText("GAME\n OVER", 0, 0, Colors.White, sadText);
-		}
-
-		if (rowClearingAnimation.IsAnimating())
-		{
-			var rowsBeingCleared = grid.GetRowsBeingCleared();
-
-			Color white = Colors.White;
-			white.A = 180;
-			foreach(var row in rowsBeingCleared)
-			{
-				args.DrawingSession.FillRectangle(0, row * cellSize, m_blocksXCountInDips, cellSize, white);
-			}
-		}
-
-		if (showDebuggingAids)
-		{
-			// Draw the current and target camera locations
-			args.DrawingSession.FillCircle(cameraX, cameraY, 7, Colors.Magenta);
-			args.DrawingSession.FillCircle(cameraTargetX, cameraTargetY, 7, Colors.LightPink);
-
-			// Draw a debugging guide over the whole thing
-			args.DrawingSession.Transform = Matrix3x2.Identity;
-			args.DrawingSession.DrawLine(targetWidth / 2, 0, targetWidth / 2, targetHeight, Colors.Red);
-			args.DrawingSession.DrawLine(0, targetHeight / 2, targetWidth, targetHeight / 2, Colors.Red);
-		}*/
-	}
-
-	/*
-	CameraTransforms GetCameraTransforms(CanvasAnimatedDrawEventArgs args, float targetWidth, float targetHeight, float m_blocksXCountInDips, float m_blocksYCountInDips)
-	{
-		CameraTransforms result = new CameraTransforms();
-
-		if (!loserMode)
-		{
-			// Set the camera to be centered on the current piece.
-			var location = grid.GetCurrentPieceLocation();
-			int screenX = location.X * cellSize;
-			int screenY = location.Y * cellSize;
-
-			var movePieceToOrigin = Matrix3x2.CreateTranslation(-cameraX, -cameraY);
-
-			var rotate = Matrix3x2.CreateRotation(cameraRotation);
-
-			var moveToCenter = Matrix3x2.CreateTranslation(targetWidth / 2, targetHeight / 2);
-
-			var prebakedInv = Matrix3x2.CreateTranslation(
-				-(targetWidth / 2) + (m_blocksXCountInDips / 2),
-				-(targetHeight / 2) + (m_blocksYCountInDips / 2));
-
-			result.Prebaked = prebakedInv * movePieceToOrigin * rotate * moveToCenter;
-			result.Final = movePieceToOrigin * rotate * moveToCenter;
-		}
-		else
-		{
-			// Fixed camera
-			float cameraX = m_blocksXCountInDips / 2;
-			float cameraY = m_blocksYCountInDips / 2;
-
-			result.Prebaked = Matrix3x2.Identity;
-			result.Final = Matrix3x2.CreateTranslation((targetWidth / 2) - cameraX, (targetHeight / 2) - cameraY);
-		}
-		return result;
-	}*/
-
-	/*
-	private void DrawStatisticsUI(CanvasAnimatedDrawEventArgs args, float m_blocksXCountInDips, Rect statisticsArea)
-	{
-		int y = (int)statisticsArea.Y;
-
-		PieceType[] types = new PieceType[]{ PieceType.T, PieceType.R, PieceType.Z, PieceType.O, PieceType.S, PieceType.L, PieceType.I };
-
-		foreach(var type in types)
-		{
-			int statistic = grid.GetStatistic((int)type);
-			string formatString = String.Format("{0:000}", statistic);
-			args.DrawingSession.DrawText(formatString, (float)statisticsArea.X + 120, (float)y + 65, Colors.Red, headingTextFormat);
-			y += 65;
-		}
-	}*/
-
-	/*
-	private void DrawNextPieceUI(CanvasAnimatedDrawEventArgs args, Rect nextPieceArea)
-	{
-		var nextPiece = grid.GetNextPieceCoordinates();
-		for (int i = 0; i < 4; ++i)
-		{
-			DrawBlock(args.DrawingSession, nextPiece.Location[i].X, nextPiece.Location[i].Y, grid.GetNextPieceType(), (int)nextPieceArea.X, (int)nextPieceArea.Y);
-		}
-	}
-
-	private void DrawLinesClearedUI(CanvasAnimatedDrawEventArgs args, Rect linesClearedArea)
-	{
-		int linesCleared = grid.GetLinesCleared();
-		string formatString = String.Format("Lines cleared: {0:000}", linesCleared);
-
-		args.DrawingSession.DrawText(formatString, (float)linesClearedArea.X, (float)linesClearedArea.Y, Colors.White, headingTextFormat);
-	}
-
-	private void DrawScoreUI(CanvasAnimatedDrawEventArgs args, float m_blocksXCountInDips)
-	{
-		Rect background = new Rect(m_blocksXCountInDips + 100, -50, 100, 100);
-		FillDarkBackground(args.DrawingSession, background);
-
-		int score = grid.GetScore();
-		string formatString = String.Format("Score\n {0:000000}", score);
-
-		args.DrawingSession.DrawText(formatString, (float)background.X, (float)background.Y, Colors.White, headingTextFormat);
-	}
-
-	private static void FillDarkBackground(CanvasDrawingSession ds, Rect gridBackground)
-	{
-		Color black = Colors.Black;
-		black.A = 128;
-		float margin = 30;
-		ds.FillRectangle(
-			(float)gridBackground.X - margin,
-			(float)gridBackground.Y - margin,
-			(float)gridBackground.Width + margin + margin,
-			(float)gridBackground.Height + margin + margin,
-			black);
-		margin = 10;
-		black.A = 180;
-		ds.FillRectangle(
-			(float)gridBackground.X - margin,
-			(float)gridBackground.Y - margin,
-			(float)gridBackground.Width + margin + margin,
-			(float)gridBackground.Height + margin + margin,
-			black);
-	}
-
-	private void DrawBlock(CanvasDrawingSession ds, int cellX, int cellY, int cellColor, int screenDispX = 0, int screenDispY = 0)
-	{
-		if (cellY < 0)
-			return; // Invisible
-
-		int screenX = cellX * cellSize + screenDispX;
-		int screenY = cellY * cellSize + screenDispY;
-
-		Rect destinationRectangle = new Rect(screenX, screenY, cellSize, cellSize);
-		Rect sourceRectangle = new Rect(42 * 2 * cellColor, 0, 42, 42);
-		ds.DrawImage(piecesBitmap, destinationRectangle, sourceRectangle);
-	}*/
-
-};
