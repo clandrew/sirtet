@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "Graphics.h"
 
-enum PieceType { I, L, O, R, S, T, Z };
-
 const int cellSize = 25;
 const float MATH_PI = 3.14159f;
 
@@ -359,8 +357,17 @@ FourCoordinates Grid::GetCurrentPieceCoordinates()
 FourCoordinates Grid::GetNextPieceCoordinates()
 {
 	Coordinate c;
-	c.Initialize(0, 3);
-	return GetPieceCoordinates(c, nextPieceType, 0);
+
+	if (nextPieceType == (int)PieceType::I)
+	{
+		c.Initialize(-1, 2);
+		return GetPieceCoordinates(c, nextPieceType, 1);
+	}
+	else
+	{
+		c.Initialize(-1, 1);
+		return GetPieceCoordinates(c, nextPieceType, 0);
+	}
 }
 
 int Grid::GetLinesCleared()
@@ -665,8 +672,8 @@ void Graphics::Draw()
 			m_native->DrawBitmap(m_ui.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 
-		D2D1_MATRIX_3X2_F gridOrigin = D2D1::Matrix3x2F::Translation(35, 8);
-		m_native->SetTransform(gridOrigin* rotate);
+		D2D1_MATRIX_3X2_F gameplayGridOrigin = D2D1::Matrix3x2F::Translation(35, 8);
+		m_native->SetTransform(gameplayGridOrigin * rotate);
 		
 		// Draw the grid
 		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
@@ -709,6 +716,15 @@ void Graphics::Draw()
 
 				m_native->FillRectangle(&fillRect, m_whiteBrush.Get());
 			}
+		}
+
+
+		D2D1_MATRIX_3X2_F nextPieceOrigin = D2D1::Matrix3x2F::Translation(101, 17);
+		m_native->SetTransform(nextPieceOrigin * rotate);
+		auto nextPiece = grid.GetNextPieceCoordinates();
+		for (int i = 0; i < 4; ++i)
+		{
+			DrawBlock(nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)grid.GetNextPieceType());
 		}
 
 		VerifyHR(m_native->EndDraw());

@@ -33,6 +33,8 @@ enum Color
 	Pink
 };
 
+enum class PieceType { I, L, O, R, S, T, Z };
+
 class Random
 {
 public:
@@ -159,8 +161,6 @@ class Graphics
 	ComPtr<ID2D1Bitmap1> m_bg;
 	ComPtr<ID2D1Bitmap1> m_ui;
 	ComPtr<ID2D1Bitmap1> m_blocks;
-
-	enum class PieceType { I, L, O, R, S, T, Z };
 
 	// Gameplay
 	Grid grid;
