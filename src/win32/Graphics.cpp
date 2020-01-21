@@ -407,7 +407,7 @@ int Grid::GetStatistic(int pieceType)
 
 void RowClearingAnimation::Start()
 {
-	frames = 10;
+	frames = 5;
 }
 
 bool RowClearingAnimation::IsAnimating()
@@ -469,6 +469,8 @@ void Graphics::Initialize(HWND hwnd)
 	VerifyHR(m_d2dFactory->CreateHwndRenderTarget(&renderTargetProperties, &hwndRenderTargetProperties, &m_renderTarget));
 
 	VerifyHR(m_renderTarget->CreateCompatibleRenderTarget(D2D1::SizeF(128, 112), &m_native));
+
+	VerifyHR(m_native->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White, 0.8f), &m_whiteBrush));
 
 	m_bg = LoadImageFile(L"Images\\testbg.png");
 	m_ui = LoadImageFile(L"Images\\ui.png");
@@ -684,12 +686,29 @@ void Graphics::Draw()
 			}
 		}
 
-		auto currentPiece = grid.GetCurrentPieceCoordinates();
-
 		// Draw the current piece
+		auto currentPiece = grid.GetCurrentPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
 			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y, (Color)grid.GetCurrentPieceType());
+		}
+
+		// Row-clearing animation
+		if (rowClearingAnimation.IsAnimating())
+		{
+			auto rowsBeingCleared = grid.GetRowsBeingCleared();
+
+
+			for(int i=0; i<rowsBeingCleared.size(); ++i)
+			{
+				D2D1_RECT_F fillRect;
+				fillRect.left = 0;
+				fillRect.right = m_blockSize * m_blocksXCount;
+				fillRect.top = rowsBeingCleared[i] * m_blockSize;
+				fillRect.bottom = fillRect.top + m_blockSize;
+
+				m_native->FillRectangle(&fillRect, m_whiteBrush.Get());
+			}
 		}
 
 		VerifyHR(m_native->EndDraw());

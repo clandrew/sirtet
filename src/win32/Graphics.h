@@ -152,6 +152,7 @@ class Graphics
 	ComPtr<IWICImagingFactory> m_wicImagingFactory;
 	ComPtr<ID2D1Factory7> m_d2dFactory;
 	ComPtr<ID2D1HwndRenderTarget> m_renderTarget;
+	ComPtr<ID2D1SolidColorBrush> m_whiteBrush;
 
 	ComPtr<ID2D1BitmapRenderTarget> m_native;
 
