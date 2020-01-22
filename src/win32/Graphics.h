@@ -164,6 +164,7 @@ class Graphics
 	ComPtr<ID2D1Bitmap1> m_bg;
 	ComPtr<ID2D1Bitmap1> m_ui;
 	ComPtr<ID2D1Bitmap1> m_blocks;
+	ComPtr<ID2D1Bitmap1> m_numbers;
 
 	// Gameplay
 	Grid grid;

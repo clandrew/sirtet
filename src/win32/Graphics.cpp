@@ -475,7 +475,8 @@ void Graphics::Initialize(HWND hwnd)
 	m_bg = LoadImageFile(L"Images\\testbg.png");
 	m_ui = LoadImageFile(L"Images\\ui.png");
 	m_blocks = LoadImageFile(L"Images\\blocks.png");
-
+	m_numbers = LoadImageFile(L"Images\\numbers.png");
+	
 	framesPerPieceDrop = 10;
 
 	loserMode = false;
@@ -734,6 +735,32 @@ void Graphics::Draw()
 		for (int i = 0; i < 4; ++i)
 		{
 			DrawBlock(nextPieceOrigin, nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)grid.GetNextPieceType());
+		}
+
+		// m_numbers
+		D2D1_POINT_2U scoreOrigin = D2D1::Point2U(100, 47);
+		{
+			int score = grid.GetScore();
+
+			for (int i = 0; i < 6; ++i)
+			{
+				int placeValue = score % 10;
+
+				D2D1_RECT_F srcRect;
+				srcRect.left = placeValue * 4;
+				srcRect.right = srcRect.left + 3;
+				srcRect.top = 0;
+				srcRect.bottom = srcRect.top + 5;
+
+				D2D1_RECT_F dstRect;
+				dstRect.left = scoreOrigin.x + ((6 - 1 - i) * 4);
+				dstRect.right = dstRect.left + 3;
+				dstRect.top = scoreOrigin.y;
+				dstRect.bottom = dstRect.top + 5;
+				m_native->DrawBitmap(m_numbers.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
+
+				score /= 10;
+			}
 		}
 
 		VerifyHR(m_native->EndDraw());
