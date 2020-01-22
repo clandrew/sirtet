@@ -431,20 +431,6 @@ void RowClearingAnimation::Update()
 	frames--;
 }
 
-float RotationIndexToDegrees(int rotation)
-{
-	switch (rotation)
-	{
-	case 0: return 0;
-	case 1: return 90.0f;
-	case 2: return 180.0f;
-	case 3: return 270.0f;
-	default:
-		assert(false);
-		return 0;
-	}
-}
-
 struct CameraTransforms
 {
 	D2D1_MATRIX_3X2_F Prebaked;
@@ -676,11 +662,12 @@ void Graphics::Draw()
 		int screenY = (currentPieceLocation.Y + 1) * 6 + m_gridInteriorOrigin.y;
 		
 		auto translate1 = D2D1::Matrix3x2F::Translation(
-			-cameraX,
-			-cameraY
+			-m_cameraX,
+			-m_cameraY
 		);
 
-		auto rotate = D2D1::Matrix3x2F::Rotation(cameraRotation);
+		// xxx
+		auto rotate = D2D1::Matrix3x2F::Rotation(m_currentCameraRotation);
 
 		auto translate2 = D2D1::Matrix3x2F::Translation(
 			srcWidth / 2,
@@ -803,9 +790,10 @@ void Graphics::NewGame()
 	framesUntilPieceDrop = framesPerPieceDrop;
 
 	SetCameraTargetXY();
-	cameraX = cameraTargetX;
-	cameraY = cameraTargetY;
-	cameraRotation = cameraTargetRotation;
+	m_cameraX = cameraTargetX;
+	m_cameraY = cameraTargetY;
+	m_currentCameraRotation = 0;
+	m_targetCameraRotation = 0;
 
 	backgroundScrollX = 0;
 	backgroundScrollY = 0;
@@ -886,14 +874,14 @@ void Graphics::OnKeyUp(WPARAM key)
 	{
 		forcingDrop = false;
 	}
-#if DEBUG
-	else if (args.VirtualKey == Windows.System.VirtualKey.Number1)
+#if _DEBUG
+	else if (key == 49)
 	{
-		showDebuggingAids = !showDebuggingAids;
+		m_showDebuggingAids = !m_showDebuggingAids;
 	}
-	else if (args.VirtualKey == Windows.System.VirtualKey.Number2)
+	else if (key == 50)
 	{
-		loserMode = !loserMode;
+		//loserMode = !loserMode;
 	}
 #endif
 }
@@ -911,9 +899,24 @@ void Graphics::SetCameraTargetXY()
 	cameraTargetY = screenY + (m_blockSize * 1) + m_gridInteriorOrigin.y;
 }
 
+// xxx
+float RotationIndexToDegrees(int rotation)
+{
+	switch (rotation)
+	{
+	case 0: return 0;
+	case 1: return 90.0f;
+	case 2: return 180.0f;
+	case 3: return 270.0f;
+	default:
+		assert(false);
+		return 0;
+	}
+}
+
 void Graphics::SetCameraTargetRotation()
 {
-	cameraTargetRotation = RotationIndexToDegrees(grid.GetCurrentPieceRotation());
+	m_targetCameraRotation = RotationIndexToDegrees(grid.GetCurrentPieceRotation());
 }
 
 void Graphics::UpdateWeirdBackgroundScrolling()
@@ -1016,8 +1019,8 @@ void Graphics::UpdateCamera()
 	float cameraIncXAmt = 4;
 	float cameraIncYAmt = cameraIncXAmt;
 
-	float cameraDispX = cameraTargetX - cameraX;
-	float cameraDispY = cameraTargetY - cameraY;
+	float cameraDispX = cameraTargetX - m_cameraX;
+	float cameraDispY = cameraTargetY - m_cameraY;
 
 	if (abs(cameraDispX) > m_blockSize)
 		cameraIncXAmt = m_blockSize * 3;
@@ -1025,40 +1028,76 @@ void Graphics::UpdateCamera()
 	if (abs(cameraDispY) > m_blockSize)
 		cameraIncYAmt = m_blockSize * 3;
 
-	if (cameraX < cameraTargetX)
+	if (m_cameraX < cameraTargetX)
 	{
-		cameraX += cameraIncXAmt;
-		cameraX = min(cameraX, cameraTargetX);
+		m_cameraX += cameraIncXAmt;
+		m_cameraX = min(m_cameraX, cameraTargetX);
 	}
-	if (cameraX > cameraTargetX)
+	if (m_cameraX > cameraTargetX)
 	{
-		cameraX -= cameraIncXAmt;
-		cameraX = max(cameraX, cameraTargetX);
+		m_cameraX -= cameraIncXAmt;
+		m_cameraX = max(m_cameraX, cameraTargetX);
 	}
-	if (cameraY < cameraTargetY)
+	if (m_cameraY < cameraTargetY)
 	{
-		cameraY += cameraIncYAmt;
-		cameraY = min(cameraY, cameraTargetY);
+		m_cameraY += cameraIncYAmt;
+		m_cameraY = min(m_cameraY, cameraTargetY);
 	}
-	if (cameraY > cameraTargetY)
+	if (m_cameraY > cameraTargetY)
 	{
-		cameraY -= cameraIncYAmt;
-		cameraY = max(cameraY, cameraTargetY);
+		m_cameraY -= cameraIncYAmt;
+		m_cameraY = max(m_cameraY, cameraTargetY);
 	}
 
-	float cameraIncRotationAmt = 10;
-	if (cameraRotation < cameraTargetRotation)
+	// xxx
+	float vec = abs(m_currentCameraRotation - m_targetCameraRotation);
+
+	float newTarget;
+	if (vec <= 180)
 	{
-		cameraRotation += cameraIncRotationAmt;
-		cameraRotation = min(cameraRotation, cameraTargetRotation);
+		// Straightforward
+		newTarget = m_targetCameraRotation;
 	}
-	if (cameraRotation > cameraTargetRotation)
+	else
 	{
-		cameraRotation += cameraIncRotationAmt;
-		cameraRotation = min(cameraRotation, 360);
+		// Choose a shorter path instead
+		newTarget = m_targetCameraRotation - 360;
+		vec = abs(m_currentCameraRotation - newTarget);
+
+		if (vec <= 180)
+		{
+			;
+		}
+		else
+		{
+			newTarget = m_targetCameraRotation + 360;
+			vec = abs(m_currentCameraRotation - newTarget);
+			VerifyAssert(vec <= 180);
+		}
 	}
-	if (cameraRotation >= 360)
+
+	float inc = 20.0f;
+	if (m_currentCameraRotation < newTarget)
 	{
-		cameraRotation = 0;
+		m_currentCameraRotation += inc;
+		m_currentCameraRotation = min(m_currentCameraRotation, newTarget);
+	}
+	else if (m_currentCameraRotation > newTarget)
+	{
+		m_currentCameraRotation -= inc;
+		m_currentCameraRotation = max(m_currentCameraRotation, newTarget);
+	}
+	   
+	while (m_currentCameraRotation > 360)
+	{
+		m_currentCameraRotation -= 360;
+	}
+}
+
+void VerifyAssert(bool cond)
+{
+	if (!cond)
+	{
+		__debugbreak();
 	}
 }

@@ -16,5 +16,6 @@
 #include <vector>
 #include <assert.h>
 #include <time.h>
+#include <sstream>
 
 using namespace Microsoft::WRL;

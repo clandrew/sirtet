@@ -1,5 +1,7 @@
 #pragma once
 
+void VerifyAssert(bool cond);
+
 struct Coordinate
 {
 	void Initialize(int x, int y);
@@ -174,12 +176,15 @@ class Graphics
 	Random random;
 
 	// Camera settings
-	float cameraX;
-	float cameraY;
+	float m_cameraX;
+	float m_cameraY;
 	float cameraTargetX;
 	float cameraTargetY;
-	float cameraRotation;
-	float cameraTargetRotation;
+
+	// xxx
+	float m_currentCameraRotation;
+	float m_targetCameraRotation;
+
 	bool m_showDebuggingAids;
 
 	// Graphics resources
