@@ -199,7 +199,7 @@ public:
 private:
 	void EnsureWicImagingFactory();
 	ComPtr<ID2D1Bitmap1> LoadImageFile(std::wstring fileName);
-	void DrawBlock(int x, int y, Color c);
+	void DrawBlock(D2D1_POINT_2U origin, int x, int y, Color c);
 	void NewGame();
 	void SetCameraTargetXY();
 	void SetCameraTargetRotation();

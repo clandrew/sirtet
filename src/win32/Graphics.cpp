@@ -629,7 +629,7 @@ void Graphics::OnTimerTick()
 	}
 }
 
-void Graphics::DrawBlock(int x, int y, Color c)
+void Graphics::DrawBlock(D2D1_POINT_2U origin, int x, int y, Color c)
 {
 	// The current piece might have an edge which goes outside the grid. We just ignore those.
 	if (x < 0 ||y < 0 || x >= m_blocksXCount || y >= m_blocksYCount) 
@@ -641,9 +641,9 @@ void Graphics::DrawBlock(int x, int y, Color c)
 	srcRect.right = srcRect.left + m_blockSize;
 
 	D2D1_RECT_F dstRect{};
-	dstRect.left = x * m_blockSize;
+	dstRect.left = x * m_blockSize + origin.x;
 	dstRect.right = dstRect.left + m_blockSize;
-	dstRect.top = y * m_blockSize;
+	dstRect.top = y * m_blockSize + origin.y;
 	dstRect.bottom = dstRect.top + m_blockSize;
 	m_native->DrawBitmap(m_blocks.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 }
@@ -666,43 +666,45 @@ void Graphics::Draw()
 			D2D1_RECT_F dstRect = D2D1::RectF(0, 0, 128, 112);
 			m_native->DrawBitmap(m_bg.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
-		
+
+		D2D1_POINT_2U gridExteriorOrigin = D2D1::Point2U(30, 3);
+		D2D1_POINT_2U gridInteriorOrigin = D2D1::Point2U(gridExteriorOrigin.x + 5, gridExteriorOrigin.y + 5);
+
 		auto currentPieceLocation = grid.GetCurrentPieceLocation();
-		int currentPieceXPixelsInGrid = currentPieceLocation.X * 6;
-		int currentPieceYPixelsInGrid = currentPieceLocation.Y * 6;
+		int screenX = (currentPieceLocation.X + 2) * 6 + gridInteriorOrigin.x;
+		int screenY = (currentPieceLocation.Y + 1) * 6 + gridInteriorOrigin.y;
 		
-		auto rotate = D2D1::Matrix3x2F::Rotation(0.0f);
+		auto translate1 = D2D1::Matrix3x2F::Translation(
+			-screenX,
+			-screenY
+		);
 
-		auto gridTransform = D2D1::Matrix3x2F::Translation(52 - currentPieceXPixelsInGrid, 51 - currentPieceYPixelsInGrid);
-		auto invGridTransform = D2D1::Matrix3x2F::Translation(-(52 - currentPieceXPixelsInGrid), -(51 - currentPieceYPixelsInGrid));
+		auto rotate = D2D1::Matrix3x2F::Rotation(90.0f);
 
-		int uiBorderThickness = 5;
-		auto uiTransform = D2D1::Matrix3x2F::Translation(- uiBorderThickness, -uiBorderThickness);
+		auto translate2 = D2D1::Matrix3x2F::Translation(
+			srcWidth / 2,
+			srcHeight / 2
+		);
 
-		auto nextPieceTransform = D2D1::Matrix3x2F::Translation(52 + 72 - 6 - currentPieceXPixelsInGrid, 51 + 15 - 6 - currentPieceYPixelsInGrid);
-		
-		m_native->SetTransform(rotate * gridTransform);
+		m_native->SetTransform(translate1 * rotate * translate2);
+
 
 		// Draw the UI
-		m_native->SetTransform(uiTransform * rotate * gridTransform);
 		{
-			// m_ui
 			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 98, 107);
-			int x = 0;
-			int y = 0;
-			D2D1_RECT_F dstRect = D2D1::RectF(x, y, x + 98, y + 107);
+			D2D1_RECT_F dstRect = D2D1::RectF(gridExteriorOrigin.x, gridExteriorOrigin.y, gridExteriorOrigin.x + 98, gridExteriorOrigin.y + 107);
 			m_native->DrawBitmap(m_ui.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 
 		// Draw the current piece
-		auto currentPiece = grid.GetCurrentPieceCoordinates();
+		auto currentPieceCoords = grid.GetCurrentPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
-			DrawBlock(currentPiece.Location[i].X, currentPiece.Location[i].Y, (Color)grid.GetCurrentPieceType());
+			DrawBlock(gridInteriorOrigin, currentPieceCoords.Location[i].X, currentPieceCoords.Location[i].Y, (Color)grid.GetCurrentPieceType());
 		}
 
 		// Draw the grid
-		/*for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
+		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
 		{
 			for (int cellX = 0; cellX < m_blocksXCount; ++cellX)
 			{
@@ -714,7 +716,7 @@ void Graphics::Draw()
 				}
 				else
 				{
-					DrawBlock(cellX, cellY, (Color)cell);
+					DrawBlock(gridInteriorOrigin, cellX, cellY, (Color)cell);
 				}
 			}
 		}
@@ -725,26 +727,24 @@ void Graphics::Draw()
 			auto rowsBeingCleared = grid.GetRowsBeingCleared();
 
 
-			for(int i=0; i<rowsBeingCleared.size(); ++i)
+			for (int i = 0; i < rowsBeingCleared.size(); ++i)
 			{
 				D2D1_RECT_F fillRect;
-				fillRect.left = 0;
-				fillRect.right = m_blockSize * m_blocksXCount;
-				fillRect.top = rowsBeingCleared[i] * m_blockSize;
+				fillRect.left = gridInteriorOrigin.x;
+				fillRect.right = m_blockSize * m_blocksXCount + gridInteriorOrigin.x;
+				fillRect.top = rowsBeingCleared[i] * m_blockSize + gridInteriorOrigin.y;
 				fillRect.bottom = fillRect.top + m_blockSize;
 
 				m_native->FillRectangle(&fillRect, m_whiteBrush.Get());
 			}
 		}
 
-
-		D2D1_MATRIX_3X2_F nextPieceOrigin = D2D1::Matrix3x2F::Translation(101, 17);
-		m_native->SetTransform(invNextPieceTransform * rotate * nextPieceTransform);
+		D2D1_POINT_2U nextPieceOrigin = D2D1::Point2U(101, 17);
 		auto nextPiece = grid.GetNextPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
-			DrawBlock(nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)grid.GetNextPieceType());
-		}*/
+			DrawBlock(nextPieceOrigin, nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)grid.GetNextPieceType());
+		}
 
 		VerifyHR(m_native->EndDraw());
 	}
