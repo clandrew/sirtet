@@ -180,13 +180,17 @@ class Graphics
 	float cameraTargetY;
 	float cameraRotation;
 	float cameraTargetRotation;
-	bool showDebuggingAids;
+	bool m_showDebuggingAids;
 
 	// Graphics resources
 	bool prebakedDrawingValid;
 	bool finishedLoadingResources;
 	float backgroundScrollX;
 	float backgroundScrollY;
+
+	// Layout
+	D2D1_POINT_2U m_gridExteriorOrigin;
+	D2D1_POINT_2U m_gridInteriorOrigin;
 	
 public:
 	void Initialize(HWND hwnd);

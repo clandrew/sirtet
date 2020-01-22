@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Graphics.h"
 
-const int cellSize = 25;
 const float MATH_PI = 3.14159f;
 
 void VerifyHR(HRESULT hr)
@@ -432,14 +431,14 @@ void RowClearingAnimation::Update()
 	frames--;
 }
 
-float RotationIndexToRadians(int rotation)
+float RotationIndexToDegrees(int rotation)
 {
 	switch (rotation)
 	{
 	case 0: return 0;
-	case 1: return (float)MATH_PI / 2;
-	case 2: return (float)MATH_PI;
-	case 3: return 3 * (float)MATH_PI / 2;
+	case 1: return 90.0f;
+	case 2: return 180.0f;
+	case 3: return 270.0f;
 	default:
 		assert(false);
 		return 0;
@@ -454,9 +453,14 @@ struct CameraTransforms
 
 void Graphics::Initialize(HWND hwnd)
 {
+	m_showDebuggingAids = false;
+
 	m_blockSize = 6;
 	m_blocksXCount = 10;
 	m_blocksYCount = 16;
+
+	m_gridExteriorOrigin = D2D1::Point2U(30, 3);
+	m_gridInteriorOrigin = D2D1::Point2U(m_gridExteriorOrigin.x + 5, m_gridExteriorOrigin.y + 5);
 
 	grid.Initialize(m_blockSize, m_blocksXCount, m_blocksYCount);
 
@@ -666,20 +670,17 @@ void Graphics::Draw()
 			D2D1_RECT_F dstRect = D2D1::RectF(0, 0, 128, 112);
 			m_native->DrawBitmap(m_bg.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
-
-		D2D1_POINT_2U gridExteriorOrigin = D2D1::Point2U(30, 3);
-		D2D1_POINT_2U gridInteriorOrigin = D2D1::Point2U(gridExteriorOrigin.x + 5, gridExteriorOrigin.y + 5);
-
+		
 		auto currentPieceLocation = grid.GetCurrentPieceLocation();
-		int screenX = (currentPieceLocation.X + 2) * 6 + gridInteriorOrigin.x;
-		int screenY = (currentPieceLocation.Y + 1) * 6 + gridInteriorOrigin.y;
+		int screenX = (currentPieceLocation.X + 2) * 6 + m_gridInteriorOrigin.x;
+		int screenY = (currentPieceLocation.Y + 1) * 6 + m_gridInteriorOrigin.y;
 		
 		auto translate1 = D2D1::Matrix3x2F::Translation(
-			-screenX,
-			-screenY
+			-cameraX,
+			-cameraY
 		);
 
-		auto rotate = D2D1::Matrix3x2F::Rotation(90.0f);
+		auto rotate = D2D1::Matrix3x2F::Rotation(cameraRotation);
 
 		auto translate2 = D2D1::Matrix3x2F::Translation(
 			srcWidth / 2,
@@ -692,7 +693,7 @@ void Graphics::Draw()
 		// Draw the UI
 		{
 			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 98, 107);
-			D2D1_RECT_F dstRect = D2D1::RectF(gridExteriorOrigin.x, gridExteriorOrigin.y, gridExteriorOrigin.x + 98, gridExteriorOrigin.y + 107);
+			D2D1_RECT_F dstRect = D2D1::RectF(m_gridExteriorOrigin.x, m_gridExteriorOrigin.y, m_gridExteriorOrigin.x + 98, m_gridExteriorOrigin.y + 107);
 			m_native->DrawBitmap(m_ui.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 
@@ -700,7 +701,7 @@ void Graphics::Draw()
 		auto currentPieceCoords = grid.GetCurrentPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
-			DrawBlock(gridInteriorOrigin, currentPieceCoords.Location[i].X, currentPieceCoords.Location[i].Y, (Color)grid.GetCurrentPieceType());
+			DrawBlock(m_gridInteriorOrigin, currentPieceCoords.Location[i].X, currentPieceCoords.Location[i].Y, (Color)grid.GetCurrentPieceType());
 		}
 
 		// Draw the grid
@@ -716,7 +717,7 @@ void Graphics::Draw()
 				}
 				else
 				{
-					DrawBlock(gridInteriorOrigin, cellX, cellY, (Color)cell);
+					DrawBlock(m_gridInteriorOrigin, cellX, cellY, (Color)cell);
 				}
 			}
 		}
@@ -730,9 +731,9 @@ void Graphics::Draw()
 			for (int i = 0; i < rowsBeingCleared.size(); ++i)
 			{
 				D2D1_RECT_F fillRect;
-				fillRect.left = gridInteriorOrigin.x;
-				fillRect.right = m_blockSize * m_blocksXCount + gridInteriorOrigin.x;
-				fillRect.top = rowsBeingCleared[i] * m_blockSize + gridInteriorOrigin.y;
+				fillRect.left = m_gridInteriorOrigin.x;
+				fillRect.right = m_blockSize * m_blocksXCount + m_gridInteriorOrigin.x;
+				fillRect.top = rowsBeingCleared[i] * m_blockSize + m_gridInteriorOrigin.y;
 				fillRect.bottom = fillRect.top + m_blockSize;
 
 				m_native->FillRectangle(&fillRect, m_whiteBrush.Get());
@@ -786,9 +787,11 @@ void Graphics::Draw()
 		VerifyHR(m_native->GetBitmap(&bitmapRenderTarget));
 		m_renderTarget->DrawBitmap(bitmapRenderTarget.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 
-		m_renderTarget->DrawLine(D2D1::Point2F(targetWidth/2, 0), D2D1::Point2F(targetWidth / 2, targetHeight), m_magentaBrush.Get(), 5.0f);
-		m_renderTarget->DrawLine(D2D1::Point2F(0, targetHeight/2), D2D1::Point2F(targetWidth, targetHeight / 2), m_magentaBrush.Get(), 5.0f);
-
+		if (m_showDebuggingAids)
+		{
+			m_renderTarget->DrawLine(D2D1::Point2F(targetWidth / 2, 0), D2D1::Point2F(targetWidth / 2, targetHeight), m_magentaBrush.Get(), 5.0f);
+			m_renderTarget->DrawLine(D2D1::Point2F(0, targetHeight / 2), D2D1::Point2F(targetWidth, targetHeight / 2), m_magentaBrush.Get(), 5.0f);
+		}
 
 		VerifyHR(m_renderTarget->EndDraw());
 	}
@@ -900,17 +903,17 @@ void Graphics::SetCameraTargetXY()
 	assert(!rowClearingAnimation.IsAnimating());
 
 	auto location = grid.GetCurrentPieceLocation();
-	int screenX = location.X * cellSize;
-	int screenY = location.Y * cellSize;
+	int screenX = location.X * m_blockSize;
+	int screenY = location.Y * m_blockSize;
 
 	// Ensure camera is centered on the piece itself
-	cameraTargetX = screenX + (cellSize * 2);
-	cameraTargetY = screenY + (cellSize * 1);
+	cameraTargetX = screenX + (m_blockSize * 2) + m_gridInteriorOrigin.x;
+	cameraTargetY = screenY + (m_blockSize * 1) + m_gridInteriorOrigin.y;
 }
 
 void Graphics::SetCameraTargetRotation()
 {
-	cameraTargetRotation = RotationIndexToRadians(grid.GetCurrentPieceRotation());
+	cameraTargetRotation = RotationIndexToDegrees(grid.GetCurrentPieceRotation());
 }
 
 void Graphics::UpdateWeirdBackgroundScrolling()
@@ -1016,11 +1019,11 @@ void Graphics::UpdateCamera()
 	float cameraDispX = cameraTargetX - cameraX;
 	float cameraDispY = cameraTargetY - cameraY;
 
-	if (abs(cameraDispX) > cellSize)
-		cameraIncXAmt = cellSize * 3;
+	if (abs(cameraDispX) > m_blockSize)
+		cameraIncXAmt = m_blockSize * 3;
 
-	if (abs(cameraDispY) > cellSize)
-		cameraIncYAmt = cellSize * 3;
+	if (abs(cameraDispY) > m_blockSize)
+		cameraIncYAmt = m_blockSize * 3;
 
 	if (cameraX < cameraTargetX)
 	{
@@ -1043,7 +1046,7 @@ void Graphics::UpdateCamera()
 		cameraY = max(cameraY, cameraTargetY);
 	}
 
-	float cameraIncRotationAmt = 0.5f;
+	float cameraIncRotationAmt = 10;
 	if (cameraRotation < cameraTargetRotation)
 	{
 		cameraRotation += cameraIncRotationAmt;
@@ -1052,9 +1055,9 @@ void Graphics::UpdateCamera()
 	if (cameraRotation > cameraTargetRotation)
 	{
 		cameraRotation += cameraIncRotationAmt;
-		cameraRotation = min(cameraRotation, 2 * MATH_PI);
+		cameraRotation = min(cameraRotation, 360);
 	}
-	if (cameraRotation >= 2 * MATH_PI)
+	if (cameraRotation >= 360)
 	{
 		cameraRotation = 0;
 	}
