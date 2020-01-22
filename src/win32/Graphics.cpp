@@ -101,6 +101,8 @@ void Grid::Initialize(int blockSize, int blocksXCount, int blocksYCount)
 
 void Grid::Reset()
 {
+	data.clear();
+
 	for (int i = 0; i < m_blocksXCount * m_blocksYCount; ++i)
 	{
 		data.push_back(-1);
