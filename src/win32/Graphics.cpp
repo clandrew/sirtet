@@ -668,15 +668,23 @@ void Graphics::Draw()
 		}
 		
 		auto currentPieceLocation = grid.GetCurrentPieceLocation();
-		auto gridTransform = D2D1::Matrix3x2F::Translation(52 - (currentPieceLocation.X * 6), 51 - (currentPieceLocation.Y * 6));
+		int currentPieceXPixelsInGrid = currentPieceLocation.X * 6;
+		int currentPieceYPixelsInGrid = currentPieceLocation.Y * 6;
+		
+		auto rotate = D2D1::Matrix3x2F::Rotation(0.0f);
+
+		auto gridTransform = D2D1::Matrix3x2F::Translation(52 - currentPieceXPixelsInGrid, 51 - currentPieceYPixelsInGrid);
+		auto invGridTransform = D2D1::Matrix3x2F::Translation(-(52 - currentPieceXPixelsInGrid), -(51 - currentPieceYPixelsInGrid));
 
 		int uiBorderThickness = 5;
-		auto uiTransform = D2D1::Matrix3x2F::Translation(52 - uiBorderThickness - (currentPieceLocation.X * 6), 51  - uiBorderThickness - (currentPieceLocation.Y * 6));
+		auto uiTransform = D2D1::Matrix3x2F::Translation(- uiBorderThickness, -uiBorderThickness);
 
-		auto nextPieceTransform = D2D1::Matrix3x2F::Translation(52 + 72 - 6 - (currentPieceLocation.X * 6), 51 + 15 - 6 - (currentPieceLocation.Y * 6));
+		auto nextPieceTransform = D2D1::Matrix3x2F::Translation(52 + 72 - 6 - currentPieceXPixelsInGrid, 51 + 15 - 6 - currentPieceYPixelsInGrid);
+		
+		m_native->SetTransform(rotate * gridTransform);
 
 		// Draw the UI
-		m_native->SetTransform(uiTransform);
+		m_native->SetTransform(uiTransform * rotate * gridTransform);
 		{
 			// m_ui
 			D2D1_RECT_F srcRect = D2D1::RectF(0, 0, 98, 107);
@@ -687,7 +695,6 @@ void Graphics::Draw()
 		}
 
 		// Draw the current piece
-		m_native->SetTransform(gridTransform);
 		auto currentPiece = grid.GetCurrentPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
@@ -695,7 +702,7 @@ void Graphics::Draw()
 		}
 
 		// Draw the grid
-		for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
+		/*for (int cellY = 0; cellY < m_blocksYCount; ++cellY)
 		{
 			for (int cellX = 0; cellX < m_blocksXCount; ++cellX)
 			{
@@ -732,12 +739,12 @@ void Graphics::Draw()
 
 
 		D2D1_MATRIX_3X2_F nextPieceOrigin = D2D1::Matrix3x2F::Translation(101, 17);
-		m_native->SetTransform(nextPieceTransform);
+		m_native->SetTransform(invNextPieceTransform * rotate * nextPieceTransform);
 		auto nextPiece = grid.GetNextPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
 			DrawBlock(nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)grid.GetNextPieceType());
-		}
+		}*/
 
 		VerifyHR(m_native->EndDraw());
 	}
