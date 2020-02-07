@@ -479,7 +479,7 @@ void Graphics::Initialize(HWND hwnd)
 	
 	framesPerPieceDrop = 10;
 
-	loserMode = false;
+	loserMode = true;
 
 	NewGame();
 }
@@ -663,21 +663,23 @@ void Graphics::Draw()
 		auto currentPieceLocation = grid.GetCurrentPieceLocation();
 		int screenX = (currentPieceLocation.X + 2) * 6 + m_gridInteriorOrigin.x;
 		int screenY = (currentPieceLocation.Y + 1) * 6 + m_gridInteriorOrigin.y;
-		
-		auto translate1 = D2D1::Matrix3x2F::Translation(
-			-m_cameraX,
-			-m_cameraY
-		);
+				
+		if (!loserMode)
+		{
+			auto translate1 = D2D1::Matrix3x2F::Translation(
+				-m_cameraX,
+				-m_cameraY
+			);
 
-		// xxx
-		auto rotate = D2D1::Matrix3x2F::Rotation(m_currentCameraRotation);
+			auto rotate = D2D1::Matrix3x2F::Rotation(m_currentCameraRotation);
 
-		auto translate2 = D2D1::Matrix3x2F::Translation(
-			srcWidth / 2,
-			srcHeight / 2
-		);
+			auto translate2 = D2D1::Matrix3x2F::Translation(
+				srcWidth / 2,
+				srcHeight / 2
+			);
 
-		m_native->SetTransform(translate1 * rotate * translate2);
+			m_native->SetTransform(translate1 * rotate * translate2);
+		}
 
 
 		// Draw the UI
@@ -904,13 +906,13 @@ void Graphics::OnKeyUp(WPARAM key)
 		forcingDrop = false;
 	}
 #if _DEBUG
-	else if (key == 49)
+	else if (key == 192) // tilde
 	{
 		m_showDebuggingAids = !m_showDebuggingAids;
 	}
-	else if (key == 50)
+	else if (key == 49) // numerical 1
 	{
-		//loserMode = !loserMode;
+		loserMode = !loserMode;
 	}
 #endif
 }
@@ -928,7 +930,6 @@ void Graphics::SetCameraTargetXY()
 	cameraTargetY = screenY + (m_blockSize * 1) + m_gridInteriorOrigin.y;
 }
 
-// xxx
 float RotationIndexToDegrees(int rotation)
 {
 	switch (rotation)
@@ -1078,7 +1079,6 @@ void Graphics::UpdateCamera()
 		m_cameraY = max(m_cameraY, cameraTargetY);
 	}
 
-	// xxx
 	float vec = abs(m_currentCameraRotation - m_targetCameraRotation);
 
 	float newTarget;
