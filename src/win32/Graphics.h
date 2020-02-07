@@ -49,24 +49,24 @@ enum class DropPieceResult { None, PieceLanded, RowsCleared, GameOver };
 
 class Grid
 {
-	std::vector<int> data;
+	std::vector<int> m_data;
 
-	std::vector<PieceLayout> pieceLayouts;
-	std::vector<Color> pieceColors;
-	std::vector<int> statistics;
+	std::vector<PieceLayout> m_pieceLayouts;
+	std::vector<Color> m_pieceColors;
+	std::vector<int> m_statistics;
 
-	int currentPieceType;
-	int nextPieceType;
-	int currentPieceRotation;
-	Coordinate currentPieceLocation;
-	int lineClearCount;
-	int score;
-	int maxForceDropThisPiece;
-	int currentForceDropLengthThisPiece;
+	int m_currentPieceType;
+	int m_nextPieceType;
+	int m_currentPieceRotation;
+	Coordinate m_currentPieceLocation;
+	int m_lineClearCount;
+	int m_score;
+	int m_maxForceDropThisPiece;
+	int m_currentForceDropLengthThisPiece;
 
-	std::vector<int> rowsBeingCleared;
+	std::vector<int> m_rowsBeingCleared;
 
-	Random random;
+	Random m_random;
 
 	int m_blockSize;
 	int m_blocksXCount;
@@ -139,7 +139,7 @@ public:
 
 class RowClearingAnimation
 {
-	int frames = -1;
+	int m_frames = -1;
 
 public:
 	void Start();
@@ -167,32 +167,31 @@ class Graphics
 	ComPtr<ID2D1Bitmap1> m_numbers;
 
 	// Gameplay
-	Grid grid;
-	int framesPerPieceDrop;
-	int framesUntilPieceDrop;
-	bool forcingDrop;
-	bool gameOver;
-	bool loserMode;
-	RowClearingAnimation rowClearingAnimation;
-	Random random;
+	Grid m_grid;
+	int m_framesPerPieceDrop;
+	int m_framesUntilPieceDrop;
+	bool m_forcingDrop;
+	bool m_gameOver;
+	bool m_loserMode;
+	RowClearingAnimation m_rowClearingAnimation;
+	Random m_random;
 
 	// Camera settings
 	float m_cameraX;
 	float m_cameraY;
-	float cameraTargetX;
-	float cameraTargetY;
+	float m_cameraTargetX;
+	float m_cameraTargetY;
 
-	// xxx
 	float m_currentCameraRotation;
 	float m_targetCameraRotation;
 
 	bool m_showDebuggingAids;
 
 	// Graphics resources
-	bool prebakedDrawingValid;
-	bool finishedLoadingResources;
-	float backgroundScrollX;
-	float backgroundScrollY;
+	bool m_prebakedDrawingValid;
+	bool m_finishedLoadingResources;
+	float m_backgroundScrollX;
+	float m_backgroundScrollY;
 
 	// Layout
 	D2D1_POINT_2U m_gridExteriorOrigin;

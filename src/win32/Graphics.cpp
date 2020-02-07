@@ -52,68 +52,68 @@ void Grid::Initialize(int blockSize, int blocksXCount, int blocksYCount)
 	m_blocksXCount = blocksXCount;
 	m_blocksYCount = blocksYCount;
 
-	pieceLayouts.resize(7);
+	m_pieceLayouts.resize(7);
 
 	// I
-	pieceLayouts[0].AddRotation(0, 0, 1, 0, 2, 0, 3, 0);
-	pieceLayouts[0].AddRotation(2, -2, 2, -1, 2, 0, 2, 1);
+	m_pieceLayouts[0].AddRotation(0, 0, 1, 0, 2, 0, 3, 0);
+	m_pieceLayouts[0].AddRotation(2, -2, 2, -1, 2, 0, 2, 1);
 
 	// L
-	pieceLayouts[1].AddRotation(1, 0, 2, 0, 3, 0, 1, 1);
-	pieceLayouts[1].AddRotation(2, -1, 2, 0, 2, 1, 3, 1);
-	pieceLayouts[1].AddRotation(1, 0, 2, 0, 3, 0, 3, -1);
-	pieceLayouts[1].AddRotation(1, -1, 2, -1, 2, 0, 2, 1);
+	m_pieceLayouts[1].AddRotation(1, 0, 2, 0, 3, 0, 1, 1);
+	m_pieceLayouts[1].AddRotation(2, -1, 2, 0, 2, 1, 3, 1);
+	m_pieceLayouts[1].AddRotation(1, 0, 2, 0, 3, 0, 3, -1);
+	m_pieceLayouts[1].AddRotation(1, -1, 2, -1, 2, 0, 2, 1);
 
 	// O
-	pieceLayouts[2].AddRotation(1, 0, 2, 0, 1, 1, 2, 1);
+	m_pieceLayouts[2].AddRotation(1, 0, 2, 0, 1, 1, 2, 1);
 
 	// R
-	pieceLayouts[3].AddRotation(1, 0, 2, 0, 3, 0, 3, 1);
-	pieceLayouts[3].AddRotation(2, -1, 3, -1, 2, 0, 2, 1);
-	pieceLayouts[3].AddRotation(1, -1, 1, 0, 2, 0, 3, 0);
-	pieceLayouts[3].AddRotation(2, -1, 2, 0, 1, 1, 2, 1);
+	m_pieceLayouts[3].AddRotation(1, 0, 2, 0, 3, 0, 3, 1);
+	m_pieceLayouts[3].AddRotation(2, -1, 3, -1, 2, 0, 2, 1);
+	m_pieceLayouts[3].AddRotation(1, -1, 1, 0, 2, 0, 3, 0);
+	m_pieceLayouts[3].AddRotation(2, -1, 2, 0, 1, 1, 2, 1);
 
 	// S
-	pieceLayouts[4].AddRotation(2, 0, 3, 0, 1, 1, 2, 1);
-	pieceLayouts[4].AddRotation(2, -1, 2, 0, 3, 0, 3, 1);
+	m_pieceLayouts[4].AddRotation(2, 0, 3, 0, 1, 1, 2, 1);
+	m_pieceLayouts[4].AddRotation(2, -1, 2, 0, 3, 0, 3, 1);
 
 	// T
-	pieceLayouts[5].AddRotation(1, 0, 2, 0, 3, 0, 2, 1);
-	pieceLayouts[5].AddRotation(2, -1, 2, 0, 3, 0, 2, 1);
-	pieceLayouts[5].AddRotation(2, -1, 1, 0, 2, 0, 3, 0);
-	pieceLayouts[5].AddRotation(2, -1, 1, 0, 2, 0, 2, 1);
+	m_pieceLayouts[5].AddRotation(1, 0, 2, 0, 3, 0, 2, 1);
+	m_pieceLayouts[5].AddRotation(2, -1, 2, 0, 3, 0, 2, 1);
+	m_pieceLayouts[5].AddRotation(2, -1, 1, 0, 2, 0, 3, 0);
+	m_pieceLayouts[5].AddRotation(2, -1, 1, 0, 2, 0, 2, 1);
 
 	// Z
-	pieceLayouts[6].AddRotation(1, 0, 2, 0, 2, 1, 3, 1);
-	pieceLayouts[6].AddRotation(3, -1, 2, 0, 3, 0, 2, 1);
+	m_pieceLayouts[6].AddRotation(1, 0, 2, 0, 2, 1, 3, 1);
+	m_pieceLayouts[6].AddRotation(3, -1, 2, 0, 3, 0, 2, 1);
 
-	pieceColors.resize(7);
-	pieceColors[0] = Color::Purple;
-	pieceColors[1] = Color::Red;
-	pieceColors[2] = Color::Yellow;
-	pieceColors[3] = Color::Cyan;
-	pieceColors[4] = Color::Green;
-	pieceColors[5] = Color::Red;
-	pieceColors[6] = Color::Pink;
+	m_pieceColors.resize(7);
+	m_pieceColors[0] = Color::Purple;
+	m_pieceColors[1] = Color::Red;
+	m_pieceColors[2] = Color::Yellow;
+	m_pieceColors[3] = Color::Cyan;
+	m_pieceColors[4] = Color::Green;
+	m_pieceColors[5] = Color::Red;
+	m_pieceColors[6] = Color::Pink;
 
 	Reset();
 }
 
 void Grid::Reset()
 {
-	data.clear();
+	m_data.clear();
 
 	for (int i = 0; i < m_blocksXCount * m_blocksYCount; ++i)
 	{
-		data.push_back(-1);
+		m_data.push_back(-1);
 	}
 
-	statistics.resize(7);
+	m_statistics.resize(7);
 
-	score = 0;
-	lineClearCount = 0;
+	m_score = 0;
+	m_lineClearCount = 0;
 
-	nextPieceType = random.Next(7);
+	m_nextPieceType = m_random.Next(7);
 	NewPiece();
 }
 
@@ -129,10 +129,10 @@ bool Grid::SetCell(int x, int y, int value, bool allowOverwrite)
 	if (y < 0)
 		return false;
 
-	if (!allowOverwrite && data[y * m_blocksXCount + x] != -1)
+	if (!allowOverwrite && m_data[y * m_blocksXCount + x] != -1)
 		return false;
 
-	data[y * m_blocksXCount + x] = value;
+	m_data[y * m_blocksXCount + x] = value;
 	return true;
 }
 
@@ -143,7 +143,7 @@ int Grid::GetCell(int x, int y)
 	if (y < 0)
 		return -1;
 
-	return data[y * m_blocksXCount + x];
+	return m_data[y * m_blocksXCount + x];
 }
 
 void Grid::ValidateBounds(int x, int y)
@@ -154,12 +154,12 @@ void Grid::ValidateBounds(int x, int y)
 
 bool Grid::TryRotatePiece()
 {
-	int forcastedIndex = (currentPieceRotation + 1) % 4;
-	int forcastedRotation = forcastedIndex % pieceLayouts[currentPieceType].EachRotation.size();
-	FourCoordinates forcastedCoordinates = GetPieceCoordinates(currentPieceLocation, currentPieceType, forcastedRotation);
+	int forcastedIndex = (m_currentPieceRotation + 1) % 4;
+	int forcastedRotation = forcastedIndex % m_pieceLayouts[m_currentPieceType].EachRotation.size();
+	FourCoordinates forcastedCoordinates = GetPieceCoordinates(m_currentPieceLocation, m_currentPieceType, forcastedRotation);
 	if (CanPlacePieceAt(forcastedCoordinates))
 	{
-		currentPieceRotation = forcastedIndex;
+		m_currentPieceRotation = forcastedIndex;
 		return true;
 	}
 	return false;
@@ -169,11 +169,11 @@ bool Grid::TryRotatePiece()
 bool Grid::TryMovePiece(int x, int y)
 {
 	Coordinate forcastedLocation;
-	forcastedLocation.Initialize(currentPieceLocation.X + x, currentPieceLocation.Y + y);
-	FourCoordinates forcastedCoordinates = GetPieceCoordinates(forcastedLocation, currentPieceType, currentPieceRotation);
+	forcastedLocation.Initialize(m_currentPieceLocation.X + x, m_currentPieceLocation.Y + y);
+	FourCoordinates forcastedCoordinates = GetPieceCoordinates(forcastedLocation, m_currentPieceType, m_currentPieceRotation);
 	if (CanPlacePieceAt(forcastedCoordinates))
 	{
-		currentPieceLocation = forcastedLocation;
+		m_currentPieceLocation = forcastedLocation;
 		return true;
 	}
 
@@ -194,8 +194,8 @@ DropPieceResult Grid::DropPiece(bool forcedDrop)
 {
 	if (forcedDrop)
 	{
-		currentForceDropLengthThisPiece++;
-		maxForceDropThisPiece = max(maxForceDropThisPiece, currentForceDropLengthThisPiece);
+		m_currentForceDropLengthThisPiece++;
+		m_maxForceDropThisPiece = max(m_maxForceDropThisPiece, m_currentForceDropLengthThisPiece);
 	}
 
 	if (!TryMovePiece(0, 1))
@@ -204,7 +204,7 @@ DropPieceResult Grid::DropPiece(bool forcedDrop)
 		{
 			ProcessAnyClearedRows();
 			NewPiece();
-			return rowsBeingCleared.size() > 0 ? DropPieceResult::RowsCleared : DropPieceResult::PieceLanded;
+			return m_rowsBeingCleared.size() > 0 ? DropPieceResult::RowsCleared : DropPieceResult::PieceLanded;
 		}
 		else
 		{
@@ -251,7 +251,7 @@ void Grid::ProcessAnyClearedRows()
 	{
 		if (IsRowClear(y))
 		{
-			rowsBeingCleared.push_back(y);
+			m_rowsBeingCleared.push_back(y);
 			rowsClearedThisMove++;
 		}
 	}
@@ -259,40 +259,40 @@ void Grid::ProcessAnyClearedRows()
 	switch (rowsClearedThisMove)
 	{
 	case 0: break;
-	case 1: score += 40; break;
-	case 2: score += 100; break;
-	case 3: score += 300; break;
-	default: score += 1200; break;
+	case 1: m_score += 40; break;
+	case 2: m_score += 100; break;
+	case 3: m_score += 300; break;
+	default: m_score += 1200; break;
 	}
 
-	lineClearCount += rowsClearedThisMove;
+	m_lineClearCount += rowsClearedThisMove;
 }
 
 std::vector<int> Grid::GetRowsBeingCleared()
 {
-	return rowsBeingCleared;
+	return m_rowsBeingCleared;
 }
 
 void Grid::PurgeClearedRows()
 {
-	for (int i = 0; i < rowsBeingCleared.size(); ++i)
+	for (int i = 0; i < m_rowsBeingCleared.size(); ++i)
 	{
-		MoveEverythingDown(rowsBeingCleared[i]);
+		MoveEverythingDown(m_rowsBeingCleared[i]);
 
 	}
-	rowsBeingCleared.clear();
+	m_rowsBeingCleared.clear();
 }
 
 void Grid::NewPiece()
 {
-	currentPieceType = nextPieceType;
-	nextPieceType = random.Next(7);
-	currentPieceRotation = 0;
-	currentPieceLocation.Initialize(3, 0);
-	maxForceDropThisPiece = 0;
-	currentForceDropLengthThisPiece = 0;
+	m_currentPieceType = m_nextPieceType;
+	m_nextPieceType = m_random.Next(7);
+	m_currentPieceRotation = 0;
+	m_currentPieceLocation.Initialize(3, 0);
+	m_maxForceDropThisPiece = 0;
+	m_currentForceDropLengthThisPiece = 0;
 
-	statistics[currentPieceType]++;
+	m_statistics[m_currentPieceType]++;
 }
 
 bool Grid::CommitCurrentPiece()
@@ -301,11 +301,11 @@ bool Grid::CommitCurrentPiece()
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (!SetCell(currentPieceCoordinates.Location[i], currentPieceType, false))
+		if (!SetCell(currentPieceCoordinates.Location[i], m_currentPieceType, false))
 			return false;
 	}
 
-	score += maxForceDropThisPiece;
+	m_score += m_maxForceDropThisPiece;
 
 	return true;
 }
@@ -330,9 +330,9 @@ bool Grid::CanPlacePieceAt(FourCoordinates coordinates)
 
 FourCoordinates Grid::GetPieceCoordinates(Coordinate pieceLocation, int pieceType, int pieceRotation)
 {
-	int effectiveRotation = pieceRotation % pieceLayouts[pieceType].EachRotation.size();
+	int effectiveRotation = pieceRotation % m_pieceLayouts[pieceType].EachRotation.size();
 
-	FourCoordinates r = pieceLayouts[pieceType].EachRotation[effectiveRotation];
+	FourCoordinates r = m_pieceLayouts[pieceType].EachRotation[effectiveRotation];
 
 	for (int i = 0; i < 4; ++i)
 	{
@@ -352,85 +352,85 @@ FourCoordinates Grid::GetPieceCoordinates(int pieceType)
 
 FourCoordinates Grid::GetCurrentPieceCoordinates()
 {
-	return GetPieceCoordinates(currentPieceLocation, currentPieceType, currentPieceRotation);
+	return GetPieceCoordinates(m_currentPieceLocation, m_currentPieceType, m_currentPieceRotation);
 }
 
 FourCoordinates Grid::GetNextPieceCoordinates()
 {
 	Coordinate c;
 
-	if (nextPieceType == (int)PieceType::I)
+	if (m_nextPieceType == (int)PieceType::I)
 	{
 		c.Initialize(-1, 2);
-		return GetPieceCoordinates(c, nextPieceType, 1);
+		return GetPieceCoordinates(c, m_nextPieceType, 1);
 	}
 	else
 	{
 		c.Initialize(-1, 1);
-		return GetPieceCoordinates(c, nextPieceType, 0);
+		return GetPieceCoordinates(c, m_nextPieceType, 0);
 	}
 }
 
 int Grid::GetLinesCleared()
 {
-	return lineClearCount;
+	return m_lineClearCount;
 }
 
 int Grid::GetScore()
 {
-	return score;
+	return m_score;
 }
 
 int Grid::GetNextPieceType()
 {
-	return nextPieceType;
+	return m_nextPieceType;
 }
 
 Coordinate Grid::GetCurrentPieceLocation()
 {
-	return currentPieceLocation;
+	return m_currentPieceLocation;
 }
 
 int Grid::GetCurrentPieceRotation()
 {
-	return currentPieceRotation;
+	return m_currentPieceRotation;
 }
 
 Color Grid::GetColor(int index)
 {
 	assert(index >= 0 && index < 7);
-	return pieceColors[index];
+	return m_pieceColors[index];
 }
 
 int Grid::GetCurrentPieceType()
 {
-	return currentPieceType;
+	return m_currentPieceType;
 }
 
 int Grid::GetStatistic(int pieceType)
 {
 	assert(pieceType >= 0 && pieceType < 7);
-	return statistics[pieceType];
+	return m_statistics[pieceType];
 }
 
 void RowClearingAnimation::Start()
 {
-	frames = 5;
+	m_frames = 5;
 }
 
 bool RowClearingAnimation::IsAnimating()
 {
-	return frames != -1;
+	return m_frames != -1;
 }
 
 void RowClearingAnimation::Stop()
 {
-	frames = -1;
+	m_frames = -1;
 }
 
 void RowClearingAnimation::Update()
 {
-	frames--;
+	m_frames--;
 }
 
 struct CameraTransforms
@@ -450,7 +450,7 @@ void Graphics::Initialize(HWND hwnd)
 	m_gridExteriorOrigin = D2D1::Point2U(30, 3);
 	m_gridInteriorOrigin = D2D1::Point2U(m_gridExteriorOrigin.x + 5, m_gridExteriorOrigin.y + 5);
 
-	grid.Initialize(m_blockSize, m_blocksXCount, m_blocksYCount);
+	m_grid.Initialize(m_blockSize, m_blocksXCount, m_blocksYCount);
 
 	D2D1_FACTORY_OPTIONS factoryOptions = {};
 	factoryOptions.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
@@ -477,9 +477,9 @@ void Graphics::Initialize(HWND hwnd)
 	m_blocks = LoadImageFile(L"Images\\blocks.png");
 	m_numbers = LoadImageFile(L"Images\\numbers.png");
 	
-	framesPerPieceDrop = 10;
+	m_framesPerPieceDrop = 10;
 
-	loserMode = true;
+	m_loserMode = true;
 
 	NewGame();
 }
@@ -592,21 +592,19 @@ void Graphics::Resize(HWND hwnd)
 
 void Graphics::OnTimerTick()
 {
-	if (gameOver)
+	if (m_gameOver)
 	{
 		UpdateWeirdBackgroundScrolling();
 		return; // No animating
 	}
-
-	//UpdateBackgroundScrolling();
-
-	if (rowClearingAnimation.IsAnimating())
+	
+	if (m_rowClearingAnimation.IsAnimating())
 	{
-		rowClearingAnimation.Update();
+		m_rowClearingAnimation.Update();
 
-		if (!rowClearingAnimation.IsAnimating())
+		if (!m_rowClearingAnimation.IsAnimating())
 		{
-			grid.PurgeClearedRows();
+			m_grid.PurgeClearedRows();
 		}
 	}
 	else
@@ -615,7 +613,7 @@ void Graphics::OnTimerTick()
 
 		UpdateForcedDrop();
 
-		if (!rowClearingAnimation.IsAnimating())
+		if (!m_rowClearingAnimation.IsAnimating())
 		{
 			UpdateCamera();
 		}
@@ -660,11 +658,11 @@ void Graphics::Draw()
 			m_native->DrawBitmap(m_bg.Get(), dstRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, srcRect);
 		}
 		
-		auto currentPieceLocation = grid.GetCurrentPieceLocation();
+		auto currentPieceLocation = m_grid.GetCurrentPieceLocation();
 		int screenX = (currentPieceLocation.X + 2) * 6 + m_gridInteriorOrigin.x;
 		int screenY = (currentPieceLocation.Y + 1) * 6 + m_gridInteriorOrigin.y;
 				
-		if (!loserMode)
+		if (!m_loserMode)
 		{
 			auto translate1 = D2D1::Matrix3x2F::Translation(
 				-m_cameraX,
@@ -690,10 +688,10 @@ void Graphics::Draw()
 		}
 
 		// Draw the current piece
-		auto currentPieceCoords = grid.GetCurrentPieceCoordinates();
+		auto currentPieceCoords = m_grid.GetCurrentPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
-			DrawBlock(m_gridInteriorOrigin, currentPieceCoords.Location[i].X, currentPieceCoords.Location[i].Y, (Color)grid.GetCurrentPieceType());
+			DrawBlock(m_gridInteriorOrigin, currentPieceCoords.Location[i].X, currentPieceCoords.Location[i].Y, (Color)m_grid.GetCurrentPieceType());
 		}
 
 		// Draw the grid
@@ -701,7 +699,7 @@ void Graphics::Draw()
 		{
 			for (int cellX = 0; cellX < m_blocksXCount; ++cellX)
 			{
-				int cell = grid.GetCell(cellX, cellY);
+				int cell = m_grid.GetCell(cellX, cellY);
 
 				if (cell == -1)
 				{
@@ -715,9 +713,9 @@ void Graphics::Draw()
 		}
 
 		// Row-clearing animation
-		if (rowClearingAnimation.IsAnimating())
+		if (m_rowClearingAnimation.IsAnimating())
 		{
-			auto rowsBeingCleared = grid.GetRowsBeingCleared();
+			auto rowsBeingCleared = m_grid.GetRowsBeingCleared();
 
 
 			for (int i = 0; i < rowsBeingCleared.size(); ++i)
@@ -733,16 +731,16 @@ void Graphics::Draw()
 		}
 
 		D2D1_POINT_2U nextPieceOrigin = D2D1::Point2U(101, 17);
-		auto nextPiece = grid.GetNextPieceCoordinates();
+		auto nextPiece = m_grid.GetNextPieceCoordinates();
 		for (int i = 0; i < 4; ++i)
 		{
-			DrawBlock(nextPieceOrigin, nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)grid.GetNextPieceType());
+			DrawBlock(nextPieceOrigin, nextPiece.Location[i].X, nextPiece.Location[i].Y, (Color)m_grid.GetNextPieceType());
 		}
 
 		// m_numbers
 		D2D1_POINT_2U scoreOrigin = D2D1::Point2U(100, 47);
 		{
-			int score = grid.GetScore();
+			int score = m_grid.GetScore();
 
 			for (int i = 0; i < 6; ++i)
 			{
@@ -818,26 +816,26 @@ void Graphics::Draw()
 
 void Graphics::NewGame()
 {
-	framesUntilPieceDrop = framesPerPieceDrop;
+	m_framesUntilPieceDrop = m_framesPerPieceDrop;
 
 	SetCameraTargetXY();
-	m_cameraX = cameraTargetX;
-	m_cameraY = cameraTargetY;
+	m_cameraX = m_cameraTargetX;
+	m_cameraY = m_cameraTargetY;
 	m_currentCameraRotation = 0;
 	m_targetCameraRotation = 0;
 
-	backgroundScrollX = 0;
-	backgroundScrollY = 0;
+	m_backgroundScrollX = 0;
+	m_backgroundScrollY = 0;
 }
 
 void Graphics::OnKeyDown(WPARAM key)
 {
-	if (gameOver)
+	if (m_gameOver)
 	{
 		return;
 	}
 
-	if (rowClearingAnimation.IsAnimating())
+	if (m_rowClearingAnimation.IsAnimating())
 	{
 		return;
 	}
@@ -845,65 +843,65 @@ void Graphics::OnKeyDown(WPARAM key)
 	if (key == 40)
 	{
 		bool forcedDrop = true;
-		auto dropResult = grid.DropPiece(forcedDrop);
+		auto dropResult = m_grid.DropPiece(forcedDrop);
 
 		if (dropResult == DropPieceResult::None || dropResult == DropPieceResult::PieceLanded)
 		{
-			forcingDrop = true;
+			m_forcingDrop = true;
 			SetCameraTargetXY();
 			SetCameraTargetRotation();
 		}
 		else if (dropResult == DropPieceResult::GameOver)
 		{
-			gameOver = true;
+			m_gameOver = true;
 		}
 		else
 		{
 			assert(dropResult == DropPieceResult::RowsCleared);
-			rowClearingAnimation.Start();
+			m_rowClearingAnimation.Start();
 		}
 	}
 }
 
 void Graphics::OnKeyUp(WPARAM key)
 {
-	if (gameOver)
+	if (m_gameOver)
 	{
-		grid.Reset();
+		m_grid.Reset();
 		NewGame();
-		gameOver = false;
+		m_gameOver = false;
 		return;
 	}
 
-	if (rowClearingAnimation.IsAnimating())
+	if (m_rowClearingAnimation.IsAnimating())
 	{
 		return;
 	}
 
 	if (key == 38)
 	{
-		if (grid.TryRotatePiece())
+		if (m_grid.TryRotatePiece())
 		{
 			SetCameraTargetRotation();
 		}
 	}
 	else if (key == 37)
 	{
-		if (grid.MovePieceLeft())
+		if (m_grid.MovePieceLeft())
 		{
 			SetCameraTargetXY();
 		}
 	}
 	else if (key == 39)
 	{
-		if (grid.MovePieceRight())
+		if (m_grid.MovePieceRight())
 		{
 			SetCameraTargetXY();
 		}
 	}
 	else if (key == 40)
 	{
-		forcingDrop = false;
+		m_forcingDrop = false;
 	}
 #if _DEBUG
 	else if (key == 192) // tilde
@@ -912,22 +910,22 @@ void Graphics::OnKeyUp(WPARAM key)
 	}
 	else if (key == 49) // numerical 1
 	{
-		loserMode = !loserMode;
+		m_loserMode = !m_loserMode;
 	}
 #endif
 }
 
 void Graphics::SetCameraTargetXY()
 {
-	assert(!rowClearingAnimation.IsAnimating());
+	assert(!m_rowClearingAnimation.IsAnimating());
 
-	auto location = grid.GetCurrentPieceLocation();
+	auto location = m_grid.GetCurrentPieceLocation();
 	int screenX = location.X * m_blockSize;
 	int screenY = location.Y * m_blockSize;
 
 	// Ensure camera is centered on the piece itself
-	cameraTargetX = screenX + (m_blockSize * 2) + m_gridInteriorOrigin.x;
-	cameraTargetY = screenY + (m_blockSize * 1) + m_gridInteriorOrigin.y;
+	m_cameraTargetX = screenX + (m_blockSize * 2) + m_gridInteriorOrigin.x;
+	m_cameraTargetY = screenY + (m_blockSize * 1) + m_gridInteriorOrigin.y;
 }
 
 float RotationIndexToDegrees(int rotation)
@@ -946,48 +944,48 @@ float RotationIndexToDegrees(int rotation)
 
 void Graphics::SetCameraTargetRotation()
 {
-	m_targetCameraRotation = RotationIndexToDegrees(grid.GetCurrentPieceRotation());
+	m_targetCameraRotation = RotationIndexToDegrees(m_grid.GetCurrentPieceRotation());
 }
 
 void Graphics::UpdateWeirdBackgroundScrolling()
 {
 	float backgroundScrollInc = 0.5f;
 
-	if (random.Next(2) == 0)
+	if (m_random.Next(2) == 0)
 		backgroundScrollInc = -backgroundScrollInc;
 
-	backgroundScrollX += backgroundScrollInc;
+	m_backgroundScrollX += backgroundScrollInc;
 
-	if (random.Next(2) == 0)
+	if (m_random.Next(2) == 0)
 		backgroundScrollInc = -backgroundScrollInc;
 
-	backgroundScrollY += backgroundScrollInc;
+	m_backgroundScrollY += backgroundScrollInc;
 }
 
 void Graphics::UpdateBackgroundScrolling()
 {
 	float backgroundScrollInc = 0.5f;
-	backgroundScrollX += backgroundScrollInc;
-	if (backgroundScrollX > 400)
-		backgroundScrollX = 0;
+	m_backgroundScrollX += backgroundScrollInc;
+	if (m_backgroundScrollX > 400)
+		m_backgroundScrollX = 0;
 
-	backgroundScrollY += backgroundScrollInc;
-	if (backgroundScrollY > 431)
-		backgroundScrollY = 0;
+	m_backgroundScrollY += backgroundScrollInc;
+	if (m_backgroundScrollY > 431)
+		m_backgroundScrollY = 0;
 }
 
 void Graphics::UpdateForcedDrop()
 {
-	if (!forcingDrop)
+	if (!m_forcingDrop)
 		return;
 
-	if (rowClearingAnimation.IsAnimating())
+	if (m_rowClearingAnimation.IsAnimating())
 	{
-		forcingDrop = false;
+		m_forcingDrop = false;
 		return;
 	}
 
-	auto dropResult = grid.DropPiece(true);
+	auto dropResult = m_grid.DropPiece(true);
 
 	if (dropResult == DropPieceResult::None)
 	{
@@ -998,59 +996,59 @@ void Graphics::UpdateForcedDrop()
 	{
 		SetCameraTargetXY();
 		SetCameraTargetRotation();
-		forcingDrop = false;
+		m_forcingDrop = false;
 	}
 	else if (dropResult == DropPieceResult::GameOver)
 	{
-		gameOver = true;
+		m_gameOver = true;
 	}
 	else if (dropResult == DropPieceResult::RowsCleared)
 	{
-		rowClearingAnimation.Start();
-		forcingDrop = false;
+		m_rowClearingAnimation.Start();
+		m_forcingDrop = false;
 	}
 
 }
 
 void Graphics::UpdateTimedDrop()
 {
-	if (framesUntilPieceDrop <= 0)
+	if (m_framesUntilPieceDrop <= 0)
 	{
-		auto dropResult = grid.DropPiece(false);
+		auto dropResult = m_grid.DropPiece(false);
 
 		if (dropResult == DropPieceResult::None || dropResult == DropPieceResult::PieceLanded)
 		{
-			framesUntilPieceDrop = framesPerPieceDrop;
+			m_framesUntilPieceDrop = m_framesPerPieceDrop;
 
 			SetCameraTargetXY();
 			SetCameraTargetRotation();
 		}
 		else if (dropResult == DropPieceResult::GameOver)
 		{
-			gameOver = true;
+			m_gameOver = true;
 		}
 		else if (dropResult == DropPieceResult::RowsCleared)
 		{
-			framesUntilPieceDrop = framesPerPieceDrop;
+			m_framesUntilPieceDrop = m_framesPerPieceDrop;
 
-			rowClearingAnimation.Start();
+			m_rowClearingAnimation.Start();
 		}
 	}
 	else
 	{
-		framesUntilPieceDrop--;
+		m_framesUntilPieceDrop--;
 	}
 }
 
 void Graphics::UpdateCamera()
 {
-	assert(!rowClearingAnimation.IsAnimating());
+	assert(!m_rowClearingAnimation.IsAnimating());
 
 	float cameraIncXAmt = 4;
 	float cameraIncYAmt = cameraIncXAmt;
 
-	float cameraDispX = cameraTargetX - m_cameraX;
-	float cameraDispY = cameraTargetY - m_cameraY;
+	float cameraDispX = m_cameraTargetX - m_cameraX;
+	float cameraDispY = m_cameraTargetY - m_cameraY;
 
 	if (abs(cameraDispX) > m_blockSize)
 		cameraIncXAmt = m_blockSize * 3;
@@ -1058,25 +1056,25 @@ void Graphics::UpdateCamera()
 	if (abs(cameraDispY) > m_blockSize)
 		cameraIncYAmt = m_blockSize * 3;
 
-	if (m_cameraX < cameraTargetX)
+	if (m_cameraX < m_cameraTargetX)
 	{
 		m_cameraX += cameraIncXAmt;
-		m_cameraX = min(m_cameraX, cameraTargetX);
+		m_cameraX = min(m_cameraX, m_cameraTargetX);
 	}
-	if (m_cameraX > cameraTargetX)
+	if (m_cameraX > m_cameraTargetX)
 	{
 		m_cameraX -= cameraIncXAmt;
-		m_cameraX = max(m_cameraX, cameraTargetX);
+		m_cameraX = max(m_cameraX, m_cameraTargetX);
 	}
-	if (m_cameraY < cameraTargetY)
+	if (m_cameraY < m_cameraTargetY)
 	{
 		m_cameraY += cameraIncYAmt;
-		m_cameraY = min(m_cameraY, cameraTargetY);
+		m_cameraY = min(m_cameraY, m_cameraTargetY);
 	}
-	if (m_cameraY > cameraTargetY)
+	if (m_cameraY > m_cameraTargetY)
 	{
 		m_cameraY -= cameraIncYAmt;
-		m_cameraY = max(m_cameraY, cameraTargetY);
+		m_cameraY = max(m_cameraY, m_cameraTargetY);
 	}
 
 	float vec = abs(m_currentCameraRotation - m_targetCameraRotation);
